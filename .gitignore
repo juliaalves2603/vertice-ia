@@ -1,70 +1,35 @@
-# =========================
 # Python
-# =========================
 __pycache__/
 *.py[cod]
 *.pyo
-*.pyd
-*.so
 
 # Virtual Environment
 .venv/
 venv/
-env/
 
-# =========================
-# Banco de Dados
-# =========================
+# Environment
+.env
+backend/.env
+
+# Database
 *.db
 *.sqlite
 *.sqlite3
 
-# =========================
-# Variáveis de ambiente
-# =========================
-.env
-.env.*
+# VS Code
+.vscode/
 
-!.env.example
-
-# =========================
 # Logs
-# =========================
-logs/
 *.log
 
-# =========================
-# IDE
-# =========================
-.vscode/
-.idea/
-
-# =========================
-# Windows
-# =========================
+# OS
+.DS_Store
 Thumbs.db
-Desktop.ini
 
-# =========================
-# Docker
-# =========================
-docker-data/
-
-# =========================
-# Python Cache
-# =========================
-.pytest_cache/
-.mypy_cache/
-.coverage
-htmlcov/
-
-# =========================
-# Git
-# =========================
-*.orig
-
-# =========================
-# Backups
-# =========================
+# Node
+node_modules/
+dist/
+build/
 backups/
-*.zip
+app_backup_*.py
+backend/app_backup_*.py
