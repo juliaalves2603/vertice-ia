@@ -1,0 +1,102 @@
+VÉRTICE IA — EXPORTAR RELATÓRIO PARA CLIENTE
+
+Esta é a base estável escolhida para voltar alguns passos.
+
+Tem apenas:
+- Painel da Júlia
+- Token Meta
+- Importar posts reais
+- Ranking de conteúdo
+- Histórico SQLite
+- Salvar snapshot
+- Relatório comparativo
+- Diagnóstico do que vale impulsionar
+
+Não tem multiclientes, WhatsApp, leads, propostas, login cliente, Vite ou npm.
+
+Como rodar:
+1. Extraia o ZIP.
+2. Clique em iniciar_vertice_ia_julia.bat
+3. Abra http://127.0.0.1:8000
+
+Configuração:
+Clique em abrir_configuracao.bat e preencha backend/.env:
+
+META_API_VERSION=v25.0
+FACEBOOK_ACCESS_TOKEN=SEU_TOKEN_NOVO
+FACEBOOK_PAGE_ID=1124922614045641
+
+Fluxo de teste:
+1. Configuração > Testar status
+2. Configuração > Testar Instagram conectado
+3. Métricas Reais > Importar dados reais
+4. Métricas Reais > Salvar snapshot
+5. Histórico > Atualizar histórico
+6. Relatório Comparativo > Gerar comparativo
+
+O relatório comparativo só fica completo depois de 2 snapshots.
+
+
+ATUALIZAÇÃO VISUAL PROFISSIONAL
+
+Esta versão mantém a mesma base funcional, mas melhora a apresentação visual:
+- Tela inicial premium
+- Aba Métricas Reais com ranking mais claro
+- Aba Histórico com leitura visual
+- Relatório comparativo mais comercial
+- Nova aba Sobre a VÉRTICE
+- Nome final: VÉRTICE IA
+
+Nenhuma lógica sensível do backend foi alterada.
+
+
+NOVA ETAPA — RELATÓRIO ESTRATÉGICO AVANÇADO
+
+Novidades:
+- Nova aba: Estratégico
+- Novo endpoint: /api/advanced-report
+- Diagnóstico do que vale testar no tráfego pago
+- Lista do que não vale impulsionar
+- Conteúdos que devem ser repetidos
+- Conteúdos que precisam ajuste antes de verba
+- Desempenho por formato
+- Plano de ação de 7 dias
+- Texto comercial pronto para apresentar ao cliente
+
+A base anterior continua funcionando.
+
+
+CORREÇÃO APLICADA
+
+Corrigido erro ao gerar Relatório Estratégico:
+- adicionado import re no backend/app.py
+- o relatório estratégico usa leitura de palavras/temas recorrentes e precisava desse módulo.
+
+
+NOVA ETAPA — EXPORTAÇÃO DE RELATÓRIO
+
+Novidades:
+- Botão Baixar relatório na aba Estratégico
+- Botão Salvar em PDF na aba Estratégico
+- Relatório em HTML pronto para apresentar ao cliente
+- Layout de relatório com capa, resumo executivo, métricas, decisões e plano de 7 dias
+- Não altera a lógica da Meta nem o banco de dados
+
+Como usar:
+1. Abra o painel
+2. Vá em Estratégico
+3. Clique em Gerar relatório estratégico
+4. Clique em Baixar relatório ou Salvar em PDF
+
+
+VERSÃO CORRIGIDA — LOGIN VISUAL
+
+Esta versão remove a autenticação básica do navegador e usa tela visual da VÉRTICE IA.
+
+Acesso:
+Usuário: vertice
+Senha: 262817
+
+Arquivos principais:
+- backend/app.py
+- backend/static/index.html

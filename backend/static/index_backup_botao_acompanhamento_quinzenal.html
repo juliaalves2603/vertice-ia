@@ -1,0 +1,3745 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>VÉRTICE IA</title>
+  <style>
+    :root{
+      --bg:#04060c;
+      --bg2:#070b16;
+      --panel:#0b1020;
+      --panel-2:#10182e;
+      --panel-3:#111d36;
+      --line:#223252;
+      --line-strong:#324568;
+      --text:#f8fafc;
+      --muted:#94a3b8;
+      --muted2:#64748b;
+      --gold:#fbbf24;
+      --gold2:#f59e0b;
+      --green:#34d399;
+      --red:#fb7185;
+      --blue:#60a5fa;
+      --purple:#c084fc;
+      --shadow:0 24px 80px rgba(0,0,0,.35);
+      --radius:22px;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      min-height:100vh;
+      color:var(--text);
+      font-family:Inter,Arial,Helvetica,sans-serif;
+      background:
+        radial-gradient(circle at 0% 0%, rgba(251,191,36,.18), transparent 28%),
+        radial-gradient(circle at 90% 8%, rgba(96,165,250,.16), transparent 26%),
+        linear-gradient(135deg,#020617 0%,#05070d 48%,#08111f 100%);
+    }
+    button,input,select,textarea{font-family:inherit}
+    button{cursor:pointer}
+    a{color:var(--gold);text-decoration:none}
+    a:hover{text-decoration:underline}
+    .layout{display:grid;grid-template-columns:292px 1fr;min-height:100vh}
+    aside{
+      position:sticky;top:0;height:100vh;overflow:auto;
+      padding:24px 20px;
+      border-right:1px solid rgba(148,163,184,.16);
+      background:rgba(2,6,23,.78);
+      backdrop-filter:blur(18px);
+    }
+    main{padding:28px;max-width:1500px;width:100%;margin:0 auto}
+    .brandBox{
+      border:1px solid rgba(251,191,36,.22);
+      background:linear-gradient(135deg,rgba(251,191,36,.14),rgba(15,23,42,.2));
+      border-radius:26px;
+      padding:20px;
+      margin-bottom:18px;
+    }
+    .brand{font-size:26px;font-weight:950;letter-spacing:.02em;line-height:1}
+    .brand span{color:var(--gold)}
+    .brandSmall{margin-top:8px;color:#cbd5e1;font-size:12px;line-height:1.45}
+    .systemPill{
+      margin-top:15px;
+      display:inline-flex;align-items:center;gap:8px;
+      border:1px solid rgba(52,211,153,.28);
+      background:rgba(52,211,153,.1);
+      color:#bbf7d0;
+      border-radius:999px;
+      padding:8px 10px;
+      font-size:11px;
+      font-weight:900;
+    }
+    .dot{width:8px;height:8px;border-radius:999px;background:var(--green);box-shadow:0 0 0 5px rgba(52,211,153,.09)}
+    nav{display:grid;gap:7px}
+    nav button{
+      width:100%;
+      border:1px solid transparent;
+      background:transparent;
+      color:#cbd5e1;
+      text-align:left;
+      border-radius:16px;
+      padding:13px 14px;
+      font-weight:850;
+      font-size:13px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      transition:.18s ease;
+    }
+    nav button:hover{
+      background:rgba(15,23,42,.8);
+      border-color:rgba(148,163,184,.16);
+      color:white;
+      transform:translateX(2px);
+    }
+    nav button.active{
+      background:linear-gradient(135deg,rgba(251,191,36,.18),rgba(15,23,42,.8));
+      border-color:rgba(251,191,36,.38);
+      color:white;
+    }
+    nav button .icon{opacity:.72;font-size:15px}
+    .sideCard{
+      margin-top:18px;
+      background:rgba(15,23,42,.68);
+      border:1px solid rgba(148,163,184,.16);
+      border-radius:22px;
+      padding:16px;
+    }
+    .sideCard p{margin:8px 0 0;color:var(--muted);font-size:12px;line-height:1.45}
+    .topbar{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-bottom:22px}
+    .eyebrow{
+      color:var(--gold);
+      font-size:10px;
+      letter-spacing:.3em;
+      text-transform:uppercase;
+      font-weight:950;
+    }
+    h1,h2,h3,h4{margin:0}
+    h1{font-size:34px;letter-spacing:-.03em;line-height:1.05}
+    h2{font-size:22px;letter-spacing:-.02em}
+    h3{font-size:16px;letter-spacing:-.01em}
+    p{color:#cbd5e1;line-height:1.6}
+    .muted{color:var(--muted);font-size:12px}
+    .muted2{color:var(--muted2);font-size:11px}
+    .statusCapsule{
+      border:1px solid rgba(148,163,184,.18);
+      background:rgba(15,23,42,.72);
+      border-radius:18px;
+      padding:12px 14px;
+      min-width:280px;
+      box-shadow:0 12px 36px rgba(0,0,0,.18);
+    }
+    .statusCapsule strong{display:block;font-size:13px}
+    .statusCapsule span{display:block;color:var(--muted);font-size:11px;margin-top:4px}
+    .alert{
+      border:1px solid rgba(251,113,133,.35);
+      background:rgba(251,113,133,.1);
+      color:#fecdd3;
+      border-radius:16px;
+      padding:13px 14px;
+      font-size:13px;
+      white-space:pre-wrap;
+      margin-bottom:18px;
+    }
+    .alert.success{
+      border-color:rgba(52,211,153,.35);
+      background:rgba(52,211,153,.1);
+      color:#bbf7d0;
+    }
+    .section{display:none;animation:fade .25s ease}
+    .section.active{display:block}
+    @keyframes fade{from{opacity:.65;transform:translateY(4px)}to{opacity:1;transform:none}}
+    .grid{display:grid;gap:18px}
+    .grid.two{grid-template-columns:1fr 1fr}
+    .grid.three{grid-template-columns:repeat(3,1fr)}
+    .grid.four{grid-template-columns:repeat(4,1fr)}
+    .grid.mainSplit{grid-template-columns:minmax(0,1fr) 390px}
+    .card{
+      background:linear-gradient(180deg,rgba(15,23,42,.88),rgba(11,16,32,.86));
+      border:1px solid rgba(148,163,184,.16);
+      border-radius:var(--radius);
+      padding:22px;
+      box-shadow:var(--shadow);
+    }
+    .card.gold{
+      border-color:rgba(251,191,36,.32);
+      background:
+        radial-gradient(circle at 0% 0%,rgba(251,191,36,.16),transparent 38%),
+        linear-gradient(180deg,rgba(15,23,42,.92),rgba(11,16,32,.88));
+    }
+    .hero{
+      position:relative;
+      overflow:hidden;
+      min-height:242px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+    }
+    .hero:after{
+      content:"";
+      position:absolute;right:-80px;top:-90px;
+      width:260px;height:260px;border-radius:999px;
+      background:radial-gradient(circle,rgba(251,191,36,.20),transparent 66%);
+      pointer-events:none;
+    }
+    .heroTitle{font-size:38px;max-width:820px;letter-spacing:-.04em}
+    .heroTitle span{color:var(--gold)}
+    .hero p{max-width:760px}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .between{display:flex;justify-content:space-between;gap:18px;align-items:flex-start}
+    .btn{
+      border:none;
+      border-radius:14px;
+      padding:12px 16px;
+      font-weight:950;
+      color:#07101f;
+      background:linear-gradient(135deg,var(--gold),#f97316);
+      box-shadow:0 14px 34px rgba(251,191,36,.18);
+      transition:.18s ease;
+    }
+    .btn:hover{transform:translateY(-1px);filter:brightness(1.05)}
+    .btn.secondary{
+      color:#e2e8f0;
+      background:rgba(15,23,42,.9);
+      border:1px solid rgba(148,163,184,.18);
+      box-shadow:none;
+    }
+    .btn.green{
+      color:#bbf7d0;
+      background:rgba(52,211,153,.13);
+      border:1px solid rgba(52,211,153,.35);
+      box-shadow:none;
+    }
+    .btn.ghost{
+      color:#cbd5e1;
+      background:transparent;
+      border:1px solid rgba(148,163,184,.16);
+      box-shadow:none;
+    }
+    .stat{
+      background:linear-gradient(180deg,rgba(15,23,42,.9),rgba(8,17,31,.92));
+      border:1px solid rgba(148,163,184,.16);
+      border-radius:20px;
+      padding:18px;
+      min-height:126px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+    }
+    .stat small{
+      display:block;
+      color:var(--muted);
+      text-transform:uppercase;
+      font-size:10px;
+      letter-spacing:.14em;
+      font-weight:950;
+    }
+    .stat strong{
+      display:block;
+      margin-top:10px;
+      font-size:30px;
+      letter-spacing:-.04em;
+    }
+    .stat .hint{font-size:11px;color:var(--muted2);margin-top:8px}
+    .stat.gold{border-color:rgba(251,191,36,.3);background:linear-gradient(180deg,rgba(251,191,36,.11),rgba(8,17,31,.92))}
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      border:1px solid rgba(148,163,184,.18);
+      background:rgba(8,17,31,.85);
+      color:#cbd5e1;
+      border-radius:999px;
+      padding:6px 10px;
+      font-size:11px;
+      font-weight:900;
+      white-space:nowrap;
+    }
+    .badge.gold{border-color:rgba(251,191,36,.45);background:rgba(251,191,36,.12);color:#fde68a}
+    .badge.green{border-color:rgba(52,211,153,.45);background:rgba(52,211,153,.12);color:#bbf7d0}
+    .badge.red{border-color:rgba(251,113,133,.45);background:rgba(251,113,133,.12);color:#fecdd3}
+    .badge.blue{border-color:rgba(96,165,250,.45);background:rgba(96,165,250,.12);color:#bfdbfe}
+    .item{
+      background:rgba(8,17,31,.72);
+      border:1px solid rgba(148,163,184,.14);
+      border-radius:20px;
+      padding:16px;
+      margin:12px 0;
+    }
+    .item.top{
+      border-color:rgba(251,191,36,.34);
+      background:linear-gradient(135deg,rgba(251,191,36,.11),rgba(8,17,31,.76));
+    }
+    .postTitle{
+      font-size:14px;
+      line-height:1.45;
+      margin:10px 0 8px;
+      color:#f8fafc;
+      font-weight:850;
+    }
+    .metricLine{
+      display:grid;
+      grid-template-columns:repeat(5,1fr);
+      gap:8px;
+      margin-top:12px;
+    }
+    .miniMetric{
+      border:1px solid rgba(148,163,184,.12);
+      background:rgba(2,6,23,.38);
+      border-radius:14px;
+      padding:10px;
+      text-align:center;
+    }
+    .miniMetric small{display:block;color:var(--muted2);font-size:9px;text-transform:uppercase;font-weight:900;letter-spacing:.1em}
+    .miniMetric strong{display:block;margin-top:5px;font-size:14px}
+    .progress{
+      width:100%;
+      height:9px;
+      border-radius:999px;
+      background:rgba(148,163,184,.13);
+      overflow:hidden;
+      margin-top:10px;
+    }
+    .progress span{
+      display:block;
+      height:100%;
+      border-radius:999px;
+      background:linear-gradient(90deg,var(--gold),#f97316);
+      width:0%;
+    }
+    table{width:100%;border-collapse:collapse;font-size:12px}
+    th,td{padding:12px 10px;border-bottom:1px solid rgba(148,163,184,.14);text-align:left;vertical-align:top}
+    th{color:#f8fafc;background:rgba(8,17,31,.72);font-size:10px;text-transform:uppercase;letter-spacing:.12em}
+    tr:hover td{background:rgba(148,163,184,.04)}
+    pre{
+      background:#020617;
+      border:1px solid rgba(148,163,184,.16);
+      border-radius:18px;
+      padding:16px;
+      color:#dbeafe;
+      white-space:pre-wrap;
+      max-height:540px;
+      overflow:auto;
+      font-size:12px;
+      line-height:1.55;
+    }
+    .reportBlock{
+      border:1px solid rgba(148,163,184,.15);
+      background:rgba(8,17,31,.58);
+      border-radius:18px;
+      padding:16px;
+      margin:12px 0;
+    }
+    .reportBlock h3{margin-bottom:10px}
+    .reportBlock ul{margin:0;padding-left:18px;color:#cbd5e1;line-height:1.6}
+    .aboutIcon{
+      width:44px;height:44px;border-radius:16px;
+      display:flex;align-items:center;justify-content:center;
+      background:rgba(251,191,36,.12);
+      border:1px solid rgba(251,191,36,.26);
+      color:var(--gold);
+      font-weight:950;
+      margin-bottom:14px;
+    }
+    .empty{
+      border:1px dashed rgba(148,163,184,.24);
+      background:rgba(8,17,31,.38);
+      border-radius:20px;
+      padding:30px;
+      text-align:center;
+      color:var(--muted);
+    }
+    @media(max-width:1100px){
+      .layout{grid-template-columns:1fr}
+      aside{position:relative;height:auto}
+      main{padding:20px}
+      .grid.two,.grid.three,.grid.four,.grid.mainSplit{grid-template-columns:1fr}
+      .topbar,.between{flex-direction:column}
+      .statusCapsule{width:100%;min-width:0}
+      .metricLine{grid-template-columns:repeat(2,1fr)}
+      h1,.heroTitle{font-size:29px}
+    }
+  </style>
+
+<style id="vertice-logo-topbar-css">
+  .vertice-topbar-logo {
+    width: 76px;
+    height: 76px;
+    object-fit: contain;
+    border-radius: 18px;
+    background: rgba(255,255,255,.96);
+    padding: 7px;
+    box-shadow: 0 10px 22px rgba(0,0,0,.18);
+    display: block;
+    margin-bottom: 10px;
+  }
+</style>
+
+
+<style id="vertice-sidebar-brand-logo-css">
+  .vertice-sidebar-brand-logo {
+    width: 96px;
+    height: 96px;
+    object-fit: contain;
+    border-radius: 22px;
+    background: rgba(255,255,255,.96);
+    padding: 8px;
+    box-shadow: 0 10px 24px rgba(0,0,0,.22);
+    display: block;
+    margin: 0 0 14px 0;
+  }
+
+  .vertice-sidebar-brand-text {
+    font-size: 13px;
+    color: #e5e7eb;
+    line-height: 1.5;
+    margin: 0 0 18px 0;
+  }
+</style>
+
+  <link rel="icon" type="image/png" href="/static/assets/logo-vertice-ia.png">
+</head>
+<body>
+<div class="layout">
+  <aside>
+    <div class="brandBox">
+      <div class="brand"><img class="vertice-sidebar-brand-logo" src="/static/assets/logo-vertice-ia.png" alt="Logo"></span></div>
+      <div class="brandSmall">Painel principal • dados reais, posicionamento e decisão estratégica.</div>
+      <div class="systemPill"><span class="dot"></span><span id="miniOnline">Verificando</span></div>
+    </div>
+    <nav id="nav"></nav>
+    <div class="sideCard">
+      <div class="eyebrow">Base atual</div>
+      <p id="miniStatus">Carregando configuração...</p>
+    </div>
+    <div class="sideCard">
+      <div class="eyebrow">Regra da VÉRTICE</div>
+      <p>Não é sobre postar mais. É sobre saber o que atrai, o que gera valor e o que merece investimento.</p>
+    </div>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div>
+        <img class="vertice-topbar-logo" src="/static/assets/logo-vertice-ia.png" alt="Logo">
+        <h1 id="title">Visão Geral</h1>
+      </div>
+      <div class="statusCapsule">
+        <strong id="apiStatus">Conectando ao backend...</strong>
+        <span id="apiStatusDetail">Aguardando resposta da API local.</span><br><br><button class="btn ghost" onclick="logoutVertice()">Sair</button>
+      </div>
+    </div>
+
+    <div id="alert"></div>
+
+    <section id="inicio" class="section active"></section>
+    <section id="config" class="section"></section>
+    <section id="token" class="section"></section>
+    <section id="metricas" class="section"></section>
+    <section id="historico" class="section"></section>
+    <section id="relatorio" class="section"></section>
+    <section id="estrategico" class="section"></section>
+    <section id="perfilCliente" class="section"></section>
+    <section id="proposta" class="section"></section>
+    <section id="historicoComercial" class="section"></section>
+    <section id="conectarMeta" class="section"></section>
+    <section id="sobre" class="section"></section>
+  </main>
+</div>
+
+<script>
+const tabs = [
+  ["inicio","Visão Geral","◆"],
+  ["config","Configuração","⚙"],
+  ["token","Token Meta","●"],
+  ["metricas","Métricas Reais","↗"],
+  ["historico","Histórico","▣"],
+  ["relatorio","Relatório","◎"],
+  ["estrategico","Estratégico","◈"],
+  ["perfilCliente","Perfil Cliente","◐"],
+  ["proposta","Proposta","$"],
+  ["historicoComercial","Histórico Comercial","▣"],
+  ["conectarMeta","Conectar Cliente Meta","◇"],
+  ["sobre","Sobre a VÉRTICE","✦"]
+];
+
+let state = {
+  tab: localStorage.getItem("vertice_julia_visual_tab") || "inicio",
+  posts: [],
+  snapshots: [],
+  report: null,
+  advanced: null,
+  account: null,
+  status: null
+};
+
+function $(id){return document.getElementById(id)}
+function fmt(n){return Number(n||0).toLocaleString("pt-BR")}
+function pct(n){return `${Number(n||0).toLocaleString("pt-BR")}%`}
+function safe(v){return (v??"").toString().replace(/[<>]/g,"")}
+function short(v, len=150){const s=(v??"").toString(); return s.length>len ? s.slice(0,len)+"..." : s}
+function show(msg,type="error"){ $("alert").innerHTML = msg ? `<div class="alert ${type==='success'?'success':''}">${safe(msg)}</div>` : "" }
+
+async function api(path, options={}){
+  const res = await fetch(path, {headers:{"Content-Type":"application/json"}, ...options});
+  const text = await res.text();
+  let data = null;
+  try{data = text ? JSON.parse(text) : null}catch{data={raw:text}}
+  if(!res.ok){
+    const detail = data?.detail;
+    let msg = typeof detail === "string" ? detail : (detail?.message || data?.message || text || "Erro na API");
+    if(detail?.code === 190) msg += "\n\nToken expirado. Gere um token novo e atualize backend/.env.";
+    if(detail?.corrigir) msg += "\n\nCorrigir:\n- " + detail.corrigir.join("\n- ");
+    throw new Error(msg);
+  }
+  return data;
+}
+
+function nav(){
+  $("nav").innerHTML = tabs.map(([id,label,icon])=>`
+    <button class="${state.tab===id?'active':''}" onclick="go('${id}')">
+      <span>${label}</span><span class="icon">${icon}</span>
+    </button>
+  `).join("");
+}
+
+function go(id){
+  state.tab=id;
+  localStorage.setItem("vertice_julia_visual_tab", id);
+  document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+  $(id).classList.add("active");
+  $("title").textContent = tabs.find(t=>t[0]===id)?.[1] || "VÉRTICE IA";
+  nav();
+  show("");
+  render();
+}
+
+async function loadStatus(){
+  try{
+    const data = await api("/api/status");
+    state.status = data;
+    $("apiStatus").textContent = "Backend online";
+    $("apiStatusDetail").textContent = `${data.meta.api_version} • ${data.meta.has_token ? "token configurado" : "token ausente"} • Page ID ${data.meta.facebook_page_id || "não informado"}`;
+    $("miniOnline").textContent = "Online";
+    $("miniStatus").textContent = data.meta.has_token
+      ? `Token configurado. Page ID: ${data.meta.facebook_page_id || "não informado"}.`
+      : "Token ainda não configurado no backend/.env.";
+    render();
+  }catch(e){
+    $("apiStatus").textContent = "Backend com erro";
+    $("apiStatusDetail").textContent = e.message;
+    $("miniOnline").textContent = "Erro";
+    $("miniStatus").textContent = e.message;
+  }
+}
+
+function kpis(){
+  const reach = state.posts.reduce((a,p)=>a+(p.reach||0),0);
+  const saved = state.posts.reduce((a,p)=>a+(p.saved||0),0);
+  const shares = state.posts.reduce((a,p)=>a+(p.shares||0),0);
+  const likes = state.posts.reduce((a,p)=>a+(p.like_count||0),0);
+  const comments = state.posts.reduce((a,p)=>a+(p.comments_count||0),0);
+  const best = [...state.posts].sort((a,b)=>(b.potential_score||0)-(a.potential_score||0))[0] || null;
+  return {reach,saved,shares,likes,comments,best};
+}
+
+function render(){
+  if(state.tab==="inicio") renderInicio();
+  if(state.tab==="config") renderConfig();
+  if(state.tab==="token") renderToken();
+  if(state.tab==="metricas") renderMetricas();
+  if(state.tab==="historico") renderHistorico();
+  if(state.tab==="relatorio") renderRelatorio();
+  if(state.tab==="estrategico") renderEstrategico();
+  if(state.tab==="perfilCliente") renderPerfilCliente();
+  if(state.tab==="proposta") renderProposta();
+  if(state.tab==="historicoComercial") renderHistoricoComercial();
+  if(state.tab==="conectarMeta") renderConectarMeta();
+  if(state.tab==="sobre") renderSobre();
+}
+
+function renderInicio(){
+  const d = kpis();
+  const latest = state.snapshots[0];
+  $("inicio").innerHTML = `
+    <div class="card hero gold">
+      <div>
+        <div class="eyebrow">Painel principal</div>
+        <h2 class="heroTitle">Dados reais para decidir o próximo movimento da <span>marca</span>.</h2>
+        <p>A VÉRTICE IA conecta dados do Instagram, identifica conteúdo com potencial e transforma métrica em plano de ação.</p>
+      </div>
+      <div class="row">
+        <button class="btn" onclick="go('metricas')">Importar métricas reais</button>
+        <button class="btn secondary" onclick="go('estrategico')">Relatório estratégico</button>
+        <button class="btn ghost" onclick="go('sobre')">Apresentar a VÉRTICE</button>
+      </div>
+    </div>
+    <br>
+    <div class="grid four">
+      <div class="stat gold"><small>Posts analisados</small><strong>${fmt(state.posts.length)}</strong><div class="hint">Importados nesta sessão</div></div>
+      <div class="stat"><small>Alcance total</small><strong>${fmt(d.reach)}</strong><div class="hint">Soma dos posts importados</div></div>
+      <div class="stat"><small>Salvamentos</small><strong>${fmt(d.saved)}</strong><div class="hint">Sinal de valor percebido</div></div>
+      <div class="stat"><small>Snapshots</small><strong>${fmt(state.snapshots.length)}</strong><div class="hint">Histórico salvo no SQLite</div></div>
+    </div>
+    <br>
+    <div class="grid mainSplit">
+      <div class="card">
+        <div class="between">
+          <div>
+            <div class="eyebrow">Leitura rápida</div>
+            <h2>O que olhar primeiro</h2>
+          </div>
+          <span class="badge gold">Sem achismo</span>
+        </div>
+        <div class="item top">
+          <h3>1. Conteúdo com maior potencial</h3>
+          <p>${d.best ? safe(short(d.best.caption, 210)) : "Importe os dados reais para identificar o conteúdo mais forte."}</p>
+          ${d.best ? `<div class="row"><span class="badge gold">Potencial ${d.best.potential_score}/100</span><span class="badge">Alcance ${fmt(d.best.reach)}</span><span class="badge green">Salvos ${fmt(d.best.saved)}</span></div>` : ""}
+        </div>
+        <div class="grid three">
+          <div class="item"><span class="badge blue">Repetir</span><p>Temas com salvamento e compartilhamento devem voltar com novo gancho.</p></div>
+          <div class="item"><span class="badge gold">Testar</span><p>Post com alto potencial pode virar teste de tráfego com verba baixa.</p></div>
+          <div class="item"><span class="badge red">Ajustar</span><p>Post com alcance baixo precisa de gancho e CTA mais claros.</p></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="eyebrow">Último snapshot</div>
+        <h2>${latest ? `#${latest.id}` : "Ainda não salvo"}</h2>
+        <p class="muted">${latest ? new Date(latest.created_at).toLocaleString("pt-BR") : "Salve um snapshot para criar sua linha de base."}</p>
+        <div class="item">
+          <div class="between"><span>Alcance</span><strong>${fmt(latest?.alcance_total||0)}</strong></div>
+          <div class="between"><span>Salvos</span><strong>${fmt(latest?.salvos_total||0)}</strong></div>
+          <div class="between"><span>Compart.</span><strong>${fmt(latest?.shares_total||0)}</strong></div>
+        </div>
+        <button class="btn secondary" onclick="go('historico')">Ver histórico</button>
+      </div>
+    </div>`;
+}
+
+function renderConfig(){
+  $("config").innerHTML = `
+    <div class="grid two">
+      <div class="card">
+        <div class="eyebrow">Conexão Meta</div>
+        <h2>Validação da conta</h2>
+        <p class="muted">Antes de importar dados reais, valide token, Page ID e Instagram profissional conectado.</p>
+        <div class="row">
+          <button class="btn" onclick="testStatus()">Testar status</button>
+          <button class="btn secondary" onclick="testAccount()">Testar Instagram conectado</button>
+          <button class="btn secondary" onclick="findPages()">Localizar páginas</button>
+        </div>
+        <br>
+        <pre id="configResult">Aguardando teste...</pre>
+      </div>
+      <div class="card gold">
+        <div class="eyebrow">backend/.env</div>
+        <h2>Configuração esperada</h2>
+        <pre>META_API_VERSION=v25.0
+FACEBOOK_ACCESS_TOKEN=SEU_TOKEN_NOVO
+FACEBOOK_PAGE_ID=1124922614045641</pre>
+        <div class="reportBlock">
+          <h3>Diagnóstico direto</h3>
+          <ul>
+            <li><strong>Status funciona:</strong> backend está online.</li>
+            <li><strong>Instagram conectado funciona:</strong> token e Page ID estão corretos.</li>
+            <li><strong>Posts importam:</strong> dados reais disponíveis.</li>
+            <li><strong>Erro code 190:</strong> token expirado.</li>
+          </ul>
+        </div>
+      </div>
+    </div>`;
+}
+
+async function testStatus(){
+  try{
+    const data = await api("/api/status");
+    $("configResult").textContent = JSON.stringify(data, null, 2);
+    await loadStatus();
+    show("Status validado com sucesso.", "success");
+  }catch(e){ $("configResult").textContent=e.message; show(e.message); }
+}
+async function testAccount(){
+  try{
+    const data = await api("/api/resolve-account");
+    state.account=data;
+    $("configResult").textContent = JSON.stringify(data, null, 2);
+    show(`Instagram conectado localizado: @${data.instagram_account?.username || ""}`, "success");
+  }catch(e){ $("configResult").textContent=e.message; show(e.message); }
+}
+async function findPages(){
+  try{
+    $("configResult").textContent = JSON.stringify(await api("/api/debug/my-pages"), null, 2);
+  }catch(e){ $("configResult").textContent=e.message; show(e.message); }
+}
+
+function postAction(p){
+  const score = Number(p.potential_score||0);
+  if(score >= 70) return {label:"Alto potencial", cls:"gold", text:"Repetir tema e testar tráfego com verba baixa."};
+  if(score >= 55) return {label:"Bom teste", cls:"green", text:"Pode virar nova variação com CTA mais forte."};
+  if((p.reach||0) > 0 && (p.saved||0) === 0) return {label:"Pouco valor", cls:"red", text:"Transformar em checklist, tutorial ou passo a passo."};
+  return {label:"Ajustar", cls:"blue", text:"Melhorar gancho, clareza da oferta e chamada para ação."};
+}
+
+
+function tokenBadge(status){
+  if(status === "ativo" || status === "conectada" || status === "conectado") return "green";
+  if(status === "invalido" || status === "erro" || status === "erro_conexao") return "red";
+  return "gold";
+}
+
+function renderToken(){
+  $("token").innerHTML = `
+    <div class="card gold">
+      <div class="between">
+        <div>
+          <div class="eyebrow">Monitor Meta</div>
+          <h2>Controle de Token e Conexão</h2>
+          <p class="muted">Verifique se o token está ativo, se a Página está acessível e se o Instagram profissional está conectado.</p>
+        </div>
+        <div class="row">
+          <button class="btn" onclick="loadTokenMonitor()">Testar conexão Meta</button>
+          <button class="btn secondary" onclick="copyTokenInstructions()">Copiar instrução</button>
+        </div>
+      </div>
+    </div>
+    <br>
+    <div id="tokenContent">
+      <div class="empty">Clique em <strong>Testar conexão Meta</strong> para validar o token atual.</div>
+    </div>
+
+    <br>
+
+    <div class="card">
+      <div class="eyebrow">Atualização de token</div>
+      <h2>Trocar Token Meta</h2>
+      <p class="muted">Cole aqui o novo token gerado na Meta. Depois de salvar, reinicie a VÉRTICE IA.</p>
+
+      <textarea id="newMetaToken" placeholder="Cole aqui o novo FACEBOOK_ACCESS_TOKEN" style="width:100%;min-height:120px;border-radius:16px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:14px;font-family:inherit;font-size:13px;resize:vertical;"></textarea>
+
+      <br><br>
+
+      <div class="row">
+        <button class="btn" onclick="saveNewMetaToken()">Salvar novo token</button>
+        <button class="btn secondary" onclick="clearNewMetaToken()">Limpar campo</button>
+      </div>
+
+      <div class="reportBlock">
+        <h3>Depois de salvar</h3>
+        <ul>
+          <li>Pare a VÉRTICE IA com <strong>Ctrl + C</strong>.</li>
+          <li>Rode novamente <strong>iniciar_vertice_ia.bat</strong>.</li>
+          <li>Volte em <strong>Token Meta → Testar conexão Meta</strong>.</li>
+        </ul>
+      </div>
+    </div>
+  `;
+}
+
+async function loadTokenMonitor(){
+  try{
+    show("Testando token e conexão com a Meta...", "success");
+    const data = await api("/api/token-monitor");
+    $("tokenContent").innerHTML = tokenMonitorHtml(data);
+
+    if(data.status === "sucesso"){
+      show("Token Meta validado com sucesso.", "success");
+    }else{
+      show(data.diagnostico || "Token com erro.");
+    }
+  }catch(e){
+    show(e.message);
+    $("tokenContent").innerHTML = `<div class="alert">${safe(e.message)}</div>`;
+  }
+}
+
+function tokenMonitorHtml(data){
+  const ig = data.instagram_account || {};
+  const page = data.facebook_page || {};
+  const err = data.erro_meta || null;
+
+  return `
+    <div class="grid four">
+      <div class="stat ${tokenBadge(data.token_status)}">
+        <small>Status do token</small>
+        <strong>${safe(data.token_status || "não testado")}</strong>
+        <div class="hint">has_token: ${data.has_token ? "sim" : "não"}</div>
+      </div>
+
+      <div class="stat ${tokenBadge(data.page_status)}">
+        <small>Página</small>
+        <strong>${safe(data.page_status || "não testado")}</strong>
+        <div class="hint">${safe(data.facebook_page_id || "Page ID ausente")}</div>
+      </div>
+
+      <div class="stat ${tokenBadge(data.instagram_status)}">
+        <small>Instagram</small>
+        <strong>${safe(data.instagram_status || "não testado")}</strong>
+        <div class="hint">${ig.username ? "@" + safe(ig.username) : "Conta não localizada"}</div>
+      </div>
+
+      <div class="stat gold">
+        <small>Meta API</small>
+        <strong>${safe(data.meta_api_version || "")}</strong>
+        <div class="hint">Último teste: ${safe(data.checked_at || "")}</div>
+      </div>
+    </div>
+
+    <br>
+
+    <div class="grid two">
+      <div class="card">
+        <div class="eyebrow">Diagnóstico</div>
+        <h2>${data.status === "sucesso" ? "Conexão validada" : "Atenção necessária"}</h2>
+        <p>${safe(data.diagnostico || "")}</p>
+
+        <div class="reportBlock">
+          <h3>Ação recomendada</h3>
+          <p>${safe(data.acao_recomendada || "")}</p>
+        </div>
+
+        ${err ? `
+          <div class="reportBlock">
+            <h3>Erro retornado pela Meta</h3>
+            <pre>${safe(JSON.stringify(err, null, 2))}</pre>
+          </div>
+        ` : ""}
+      </div>
+
+      <div class="card gold">
+        <div class="eyebrow">Dados encontrados</div>
+        <h2>Conta conectada</h2>
+
+        <div class="item">
+          <div class="between"><span>Page ID</span><strong>${safe(page.id || data.facebook_page_id || "")}</strong></div>
+          <div class="between"><span>Página</span><strong>${safe(page.name || "Não localizada")}</strong></div>
+          <div class="between"><span>Instagram ID</span><strong>${safe(ig.id || "Não localizado")}</strong></div>
+          <div class="between"><span>Instagram</span><strong>${ig.username ? "@" + safe(ig.username) : "Não conectado"}</strong></div>
+        </div>
+
+        <div class="reportBlock">
+          <h3>Quando trocar o token</h3>
+          <ul>
+            <li>Quando aparecer erro <strong>code 190</strong>.</li>
+            <li>Quando a importação de posts parar.</li>
+            <li>Quando a Meta remover permissões.</li>
+            <li>Antes de uma apresentação importante.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function copyTokenInstructions(){
+  const text = `VÉRTICE IA — Atualização de Token Meta
+
+1. Gere um novo token na Meta com permissões:
+pages_show_list
+pages_read_engagement
+instagram_basic
+instagram_manage_insights
+business_management
+
+2. Atualize o arquivo:
+C:\\Users\\CECOMPI_NOTE\\Downloads\\VERTICE-IA-JULIA\\backend\\.env
+
+3. Mantenha:
+META_API_VERSION=v25.0
+FACEBOOK_PAGE_ID=1124922614045641
+FACEBOOK_ACCESS_TOKEN=COLE_AQUI_O_TOKEN_NOVO
+
+4. Reinicie:
+cd "C:\\Users\\CECOMPI_NOTE\\Downloads\\VERTICE-IA-JULIA"
+.\\iniciar_vertice_ia.bat
+
+5. No painel:
+Token Meta → Testar conexão Meta`;
+
+  await navigator.clipboard.writeText(text);
+  show("Instrução de token copiada.", "success");
+}
+
+
+async function saveNewMetaToken(){
+  const field = $("newMetaToken");
+  const token = field ? field.value.trim() : "";
+
+  if(!token){
+    show("Cole o novo token antes de salvar.");
+    return;
+  }
+
+  if(token.length < 50){
+    show("Esse token parece curto demais. Verifique se copiou completo.");
+    return;
+  }
+
+  try{
+    const data = await api("/api/update-token", {
+      method:"POST",
+      body:JSON.stringify({token})
+    });
+
+    field.value = "";
+    show(data.message || "Token salvo. Reinicie a VÉRTICE IA.", "success");
+  }catch(e){
+    show(e.message);
+  }
+}
+
+function clearNewMetaToken(){
+  const field = $("newMetaToken");
+  if(field) field.value = "";
+  show("Campo limpo.", "success");
+}
+
+function renderMetricas(){
+  const sorted = [...state.posts].sort((a,b)=>(b.potential_score||0)-(a.potential_score||0));
+  const d = kpis();
+  $("metricas").innerHTML = `
+    <div class="card gold">
+      <div class="between">
+        <div>
+          <div class="eyebrow">Métricas reais</div>
+          <h2>Ranking estratégico de conteúdo</h2>
+          <p class="muted">A leitura considera alcance, salvamento, compartilhamento, curtidas e comentários. O objetivo é decidir o que repetir, ajustar ou testar no tráfego.</p>
+        </div>
+        <div class="row">
+          <button class="btn" onclick="importPosts()">Importar dados reais</button>
+          <button class="btn green" onclick="saveSnapshot()">Salvar snapshot</button>
+        </div>
+      </div>
+    </div>
+    <br>
+    <div class="grid four">
+      <div class="stat gold"><small>Posts</small><strong>${fmt(state.posts.length)}</strong><div class="hint">Publicações analisadas</div></div>
+      <div class="stat"><small>Alcance</small><strong>${fmt(d.reach)}</strong><div class="hint">Visibilidade total</div></div>
+      <div class="stat"><small>Salvos</small><strong>${fmt(d.saved)}</strong><div class="hint">Valor percebido</div></div>
+      <div class="stat"><small>Compart.</small><strong>${fmt(d.shares)}</strong><div class="hint">Identificação do público</div></div>
+    </div>
+    <br>
+    <div class="grid mainSplit">
+      <div class="card">
+        <div class="between">
+          <div><div class="eyebrow">Publicações</div><h2>Ranking de potencial</h2></div>
+          <span class="badge gold">${state.posts.length ? "Dados reais carregados" : "Aguardando importação"}</span>
+        </div>
+        <br>
+        ${sorted.length ? sorted.map((p,i)=>{
+          const a = postAction(p);
+          return `
+            <div class="item ${i===0?'top':''}">
+              <div class="between">
+                <div>
+                  <div class="row">
+                    <span class="badge ${i===0?'gold':''}">#${i+1}</span>
+                    <span class="badge">${safe(p.media_type)}</span>
+                    <span class="badge ${a.cls}">${a.label}</span>
+                  </div>
+                  <div class="postTitle">${safe(short(p.caption, 210))}</div>
+                  <p class="muted">${safe(p.timestamp||"")}</p>
+                  ${p.permalink ? `<a href="${p.permalink}" target="_blank">Abrir publicação original</a>` : ""}
+                </div>
+                <div style="min-width:280px">
+                  <div class="between"><span>Potencial</span><strong>${p.potential_score||0}/100</strong></div>
+                  <div class="progress"><span style="width:${Math.min(100, Number(p.potential_score||0))}%"></span></div>
+                  <p class="muted">${a.text}</p>
+                </div>
+              </div>
+              <div class="metricLine">
+                <div class="miniMetric"><small>Alcance</small><strong>${fmt(p.reach)}</strong></div>
+                <div class="miniMetric"><small>Salvos</small><strong>${fmt(p.saved)}</strong></div>
+                <div class="miniMetric"><small>Compart.</small><strong>${fmt(p.shares)}</strong></div>
+                <div class="miniMetric"><small>Curtidas</small><strong>${fmt(p.like_count)}</strong></div>
+                <div class="miniMetric"><small>Coment.</small><strong>${fmt(p.comments_count)}</strong></div>
+              </div>
+            </div>`;
+        }).join("") : `<div class="empty">Clique em <strong>Importar dados reais</strong> para carregar as publicações da Meta.</div>`}
+      </div>
+      <div class="card">
+        <div class="eyebrow">Decisão rápida</div>
+        <h2>Resumo estratégico</h2>
+        ${d.best ? `
+          <div class="reportBlock">
+            <h3>Melhor conteúdo</h3>
+            <p>${safe(short(d.best.caption, 180))}</p>
+            <span class="badge gold">Potencial ${d.best.potential_score}/100</span>
+          </div>
+          <div class="reportBlock">
+            <h3>Próximo movimento</h3>
+            <ul>
+              <li>Repetir o tema com novo gancho.</li>
+              <li>Transformar em stories com CTA.</li>
+              <li>Se potencial ≥ 55, avaliar tráfego com verba baixa.</li>
+              <li>Se salvos forem baixos, criar checklist ou tutorial.</li>
+            </ul>
+          </div>` : `
+          <div class="empty">A leitura estratégica aparece depois da importação.</div>`}
+      </div>
+    </div>`;
+}
+
+async function importPosts(){
+  try{
+    show("Importando dados reais da Meta. Aguarde...", "success");
+    const data = await api("/api/posts?limit=50");
+    state.posts = data.data || [];
+    state.account = data;
+    show(`Importação concluída: ${state.posts.length} posts reais.`, "success");
+    renderMetricas();
+  }catch(e){ show(e.message); }
+}
+
+async function saveSnapshot(){
+  try{
+    const data = await api("/api/snapshots/save?limit=50", {method:"POST"});
+    show(`Snapshot salvo com sucesso. ID ${data.snapshot.id}.`, "success");
+    await loadSnapshots(false);
+    renderMetricas();
+  }catch(e){ show(e.message); }
+}
+
+function renderHistorico(){
+  $("historico").innerHTML = `
+    <div class="card gold">
+      <div class="between">
+        <div>
+          <div class="eyebrow">Histórico SQLite</div>
+          <h2>Evolução salva por snapshot</h2>
+          <p class="muted">Cada snapshot guarda o estado das métricas no momento da análise. Com dois snapshots, o relatório mostra crescimento ou queda.</p>
+        </div>
+        <div class="row">
+          <button class="btn" onclick="loadSnapshots(true)">Atualizar histórico</button>
+          <button class="btn secondary" onclick="go('estrategico')">Relatório estratégico</button>
+        </div>
+      </div>
+    </div>
+    <br>
+    <div id="historyContent">${historyHtml()}</div>`;
+}
+
+function historyHtml(){
+  if(!state.snapshots.length){
+    return `<div class="empty">Nenhum snapshot salvo ainda. Vá em <strong>Métricas Reais</strong> e clique em <strong>Salvar snapshot</strong>.</div>`;
+  }
+  const latest = state.snapshots[0];
+  return `
+    <div class="grid four">
+      <div class="stat gold"><small>Snapshots</small><strong>${fmt(state.snapshots.length)}</strong><div class="hint">Registros salvos</div></div>
+      <div class="stat"><small>Último alcance</small><strong>${fmt(latest?.alcance_total||0)}</strong><div class="hint">Última análise</div></div>
+      <div class="stat"><small>Últimos salvos</small><strong>${fmt(latest?.salvos_total||0)}</strong><div class="hint">Sinal de valor</div></div>
+      <div class="stat"><small>Últimos shares</small><strong>${fmt(latest?.shares_total||0)}</strong><div class="hint">Sinal de identificação</div></div>
+    </div>
+    <br>
+    <div class="card">
+      <div class="between">
+        <div><div class="eyebrow">Tabela</div><h2>Snapshots registrados</h2></div>
+        <span class="badge gold">Último #${latest.id}</span>
+      </div>
+      <br>
+      <table>
+        <thead><tr><th>ID</th><th>Data</th><th>Conta</th><th>Posts</th><th>Alcance</th><th>Salvos</th><th>Compart.</th><th>Curtidas</th><th>Comentários</th></tr></thead>
+        <tbody>
+          ${state.snapshots.map((s,i)=>`
+            <tr>
+              <td><span class="badge ${i===0?'gold':''}">#${s.id}</span></td>
+              <td>${new Date(s.created_at).toLocaleString("pt-BR")}</td>
+              <td>@${safe(s.instagram_username||"")}</td>
+              <td>${fmt(s.total_posts)}</td>
+              <td>${fmt(s.alcance_total)}</td>
+              <td>${fmt(s.salvos_total)}</td>
+              <td>${fmt(s.shares_total)}</td>
+              <td>${fmt(s.curtidas_total)}</td>
+              <td>${fmt(s.comentarios_total)}</td>
+            </tr>`).join("")}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+async function loadSnapshots(showMsg=true){
+  try{
+    const data = await api("/api/snapshots?limit=50");
+    state.snapshots = data.snapshots || [];
+    if($("historyContent")) $("historyContent").innerHTML = historyHtml();
+    if(showMsg) show("Histórico atualizado.", "success");
+    render();
+  }catch(e){ show(e.message); }
+}
+
+function renderRelatorio(){
+  $("relatorio").innerHTML = `
+    <div class="grid mainSplit">
+      <div class="card gold">
+        <div class="between">
+          <div>
+            <div class="eyebrow">Relatório comparativo</div>
+            <h2>Leitura pronta para decisão</h2>
+            <p class="muted">Compare os dois últimos snapshots e transforme variação de métrica em plano de ação.</p>
+          </div>
+          <div class="row">
+            <button class="btn" onclick="loadComparative()">Gerar comparativo</button>
+            <button class="btn secondary" onclick="copyReport()">Copiar relatório</button>
+          </div>
+        </div>
+        <br>
+        <div id="visualReport">${state.report ? visualReport(state.report) : `<div class="empty">Clique em <strong>Gerar comparativo</strong>. O relatório completo precisa de pelo menos 2 snapshots.</div>`}</div>
+      </div>
+      <div class="card">
+        <div class="eyebrow">Texto copiável</div>
+        <h2>Versão para enviar/apresentar</h2>
+        <br>
+        <pre id="reportBox">${state.report ? formatReport(state.report) : "Clique em Gerar comparativo."}</pre>
+      </div>
+    </div>`;
+}
+
+async function loadComparative(){
+  try{
+    state.report = await api("/api/comparative-report?days=90");
+    renderRelatorio();
+    show("Relatório gerado.", "success");
+  }catch(e){ show(e.message); }
+}
+
+function visualReport(r){
+  if(r.status !== "sucesso"){
+    return `
+      <div class="reportBlock">
+        <h3>${safe(r.message || r.status)}</h3>
+        <ul>${(r.action_plan||[]).map(x=>`<li>${safe(x)}</li>`).join("")}</ul>
+      </div>`;
+  }
+  return `
+    <div class="grid four">
+      <div class="stat ${r.delta_totals.alcance_total>=0?'gold':''}"><small>Δ Alcance</small><strong>${fmt(r.delta_totals.alcance_total)}</strong></div>
+      <div class="stat"><small>Δ Salvos</small><strong>${fmt(r.delta_totals.salvos_total)}</strong></div>
+      <div class="stat"><small>Δ Shares</small><strong>${fmt(r.delta_totals.shares_total)}</strong></div>
+      <div class="stat"><small>Δ Coment.</small><strong>${fmt(r.delta_totals.comentarios_total)}</strong></div>
+    </div>
+    <div class="reportBlock">
+      <h3>Resumo executivo</h3>
+      <p>${safe(r.message)}</p>
+    </div>
+    <div class="grid two">
+      <div class="reportBlock">
+        <h3>O que cresceu</h3>
+        <ul>${(r.top_gains||[]).length ? r.top_gains.map(p=>`<li>${safe(short(p.caption,110))} • alcance ${fmt(p.delta_reach)} • salvos ${fmt(p.delta_saved)}</li>`).join("") : "<li>Sem posts comparáveis ainda.</li>"}</ul>
+      </div>
+      <div class="reportBlock">
+        <h3>O que caiu ou precisa ajuste</h3>
+        <ul>${(r.top_losses||[]).length ? r.top_losses.map(p=>`<li>${safe(short(p.caption,110))} • alcance ${fmt(p.delta_reach)} • salvos ${fmt(p.delta_saved)}</li>`).join("") : "<li>Sem queda comparável ainda.</li>"}</ul>
+      </div>
+    </div>
+    <div class="reportBlock">
+      <h3>Plano de ação 7 dias</h3>
+      <ul>${(r.action_plan||[]).map(x=>`<li>${safe(x)}</li>`).join("")}</ul>
+    </div>`;
+}
+
+function formatReport(r){
+  if(!r) return "";
+  if(r.status !== "sucesso"){
+    return `STATUS: ${r.status}
+${r.message || ""}
+
+Plano:
+- ${(r.action_plan||[]).join("\n- ")}`;
+  }
+  return `RELATÓRIO COMPARATIVO — VÉRTICE IA
+
+${r.message}
+
+Variação total:
+Alcance: ${r.delta_totals.alcance_total}
+Salvos: ${r.delta_totals.salvos_total}
+Compartilhamentos: ${r.delta_totals.shares_total}
+Curtidas: ${r.delta_totals.curtidas_total}
+Comentários: ${r.delta_totals.comentarios_total}
+
+O que cresceu:
+${(r.top_gains||[]).map(p=>`- ${(p.caption||"").slice(0,110)} | alcance ${p.delta_reach} | salvos ${p.delta_saved}`).join("\n") || "- Sem posts comparáveis ainda."}
+
+O que caiu ou precisa ajuste:
+${(r.top_losses||[]).map(p=>`- ${(p.caption||"").slice(0,110)} | alcance ${p.delta_reach} | salvos ${p.delta_saved}`).join("\n") || "- Sem posts comparáveis ainda."}
+
+Plano de ação:
+- ${(r.action_plan||[]).join("\n- ")}`;
+}
+
+async function copyReport(){
+  const text = $("reportBox")?.textContent || "";
+  await navigator.clipboard.writeText(text);
+  show("Relatório copiado.", "success");
+}
+
+
+function renderEstrategico(){
+  $("estrategico").innerHTML = `
+    <div class="card gold">
+      <div class="between">
+        <div>
+          <div class="eyebrow">Relatório estratégico avançado</div>
+          <h2>Decisão de conteúdo, tráfego e posicionamento</h2>
+          <p class="muted">Esta aba usa dados reais da conta Meta conectada. Para analisar um cliente por link ou @, use a aba Perfil Cliente.</p>
+        </div>
+        <div class="row">
+          <button class="btn" onclick="loadAdvanced()">Gerar relatório estratégico</button>
+          <button class="btn secondary" onclick="copyAdvanced()">Copiar análise</button>
+          <button class="btn secondary" onclick="downloadAdvancedHtml()">Baixar relatório</button>
+          <button class="btn ghost" onclick="printAdvancedReport()">Salvar em PDF</button>
+        </div>
+      </div>
+    </div>
+    <br>
+    
+    <div class="card">
+      <div class="eyebrow">Dados do cliente</div>
+      <h2>Personalização do relatório</h2>
+      <p class="muted">Opcional: preencha para personalizar o PDF. Esses dados aparecem no relatório, mas não são usados para buscar perfil. Para cliente por link/@, use a aba Perfil Cliente.</p>
+
+      <div class="grid two">
+        <div>
+          <label class="muted">Nome do cliente</label>
+          <input id="clientName" placeholder="Ex: Espaço TM Pilates" style="width:100%;border-radius:14px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:12px;margin-top:6px;">
+        </div>
+
+        <div>
+          <label class="muted">Instagram analisado</label>
+          <input id="clientInstagram" placeholder="Opcional: @cliente ou link apenas para aparecer no PDF" style="width:100%;border-radius:14px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:12px;margin-top:6px;">
+        </div>
+
+        <div>
+          <label class="muted">Segmento</label>
+          <input id="clientSegment" placeholder="Ex: Pilates, estética, alimentação..." style="width:100%;border-radius:14px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:12px;margin-top:6px;">
+        </div>
+
+        <div>
+          <label class="muted">Responsável pela análise</label>
+          <input id="clientResponsible" placeholder="Ex: Júlia Alves / VÉRTICE IA" style="width:100%;border-radius:14px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:12px;margin-top:6px;">
+        </div>
+      </div>
+
+      <br>
+
+      <label class="muted">Objetivo da análise</label>
+      <input id="clientGoal" placeholder="Ex: entender conteúdos com maior potencial e melhorar posicionamento" style="width:100%;border-radius:14px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:12px;margin-top:6px;">
+
+      <br><br>
+
+      <label class="muted">Observações estratégicas</label>
+      <textarea id="clientNotes" placeholder="Ex: foco em autoridade, aumento de alcance qualificado e conteúdos para captação" style="width:100%;min-height:100px;border-radius:14px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:12px;margin-top:6px;font-family:inherit;resize:vertical;"></textarea>
+
+      <br><br>
+
+      <div class="row">
+        <button class="btn" onclick="saveClientReportData()">Salvar dados do cliente</button>
+        <button class="btn secondary" onclick="clearClientReportData()">Limpar</button>
+      </div>
+    </div>
+
+    <br>
+
+    <div class="alert success">
+      <strong>Organização das abas:</strong> Estratégico usa os dados reais da conta conectada na Meta.
+      Para analisar bio, posts e posicionamento de outro cliente por link/@, use a aba <strong>Perfil Cliente</strong>.
+    </div>
+
+    <br>
+<div id="advancedContent">${state.advanced ? advancedHtml(state.advanced) : `<div class="empty">Clique em <strong>Gerar relatório estratégico</strong> para analisar os dados reais atuais.</div>`}</div>
+  `;
+  setTimeout(fillClientReportData, 50);
+}
+
+
+async function loadAdvanced(){
+  try{
+    show("Gerando relatório estratégico com dados reais da conta conectada...", "success");
+
+    const data = await api("/api/advanced-report?limit=50");
+
+    state.advanced = data.advanced_report;
+
+    const box = $("advancedContent");
+    if(box){
+      box.innerHTML = advancedHtml(state.advanced);
+    }
+
+    show("Relatório estratégico da conta conectada gerado.", "success");
+
+  }catch(e){
+    show(e.message);
+  }
+}
+
+
+
+function getClientUsernameForDiscovery(){
+  const data = typeof getClientReportData === "function" ? getClientReportData() : {};
+  let username = (data.instagram || "").trim();
+
+  username = username
+    .replace("https://www.instagram.com/", "")
+    .replace("http://www.instagram.com/", "")
+    .replace("https://instagram.com/", "")
+    .replace("http://instagram.com/", "")
+    .replaceAll("/", "")
+    .replace("@", "")
+    .trim();
+
+  return username;
+}
+
+async function testClientDiscovery(){
+  const username = getClientUsernameForDiscovery();
+
+  if(!username){
+    show("Preencha o Instagram do cliente nos Dados do cliente. Exemplo: @espacotmpilates");
+    return;
+  }
+
+  try{
+    show("Localizando perfil do cliente via Meta Business Discovery...", "success");
+
+    const data = await api(`/api/client-discovery?username=${encodeURIComponent(username)}&limit=12`);
+
+    const profile = data.profile || {};
+
+    show(`Perfil localizado: @${profile.username || username}. Dados públicos carregados.`, "success");
+
+    const content = `
+      <div class="card gold">
+        <div class="eyebrow">Cliente localizado</div>
+        <h2>@${safe(profile.username || username)}</h2>
+        <p class="muted">Fonte: ${safe(data.fonte || "Meta Business Discovery")}. ${safe(data.aviso || "")}</p>
+
+        <div class="grid four">
+          <div class="stat gold"><small>Seguidores</small><strong>${fmt(profile.followers_count || 0)}</strong></div>
+          <div class="stat"><small>Total de posts</small><strong>${fmt(profile.media_count || 0)}</strong></div>
+          <div class="stat"><small>Posts lidos</small><strong>${fmt((data.data || []).length)}</strong></div>
+          <div class="stat"><small>Modo</small><strong>Público</strong></div>
+        </div>
+
+        <br>
+
+        <div class="reportBlock">
+          <h3>Aviso importante</h3>
+          <p>Essa análise por @ usa dados públicos. Para puxar alcance, salvos e compartilhamentos reais, o cliente precisa conectar a própria conta profissional à VÉRTICE IA.</p>
+        </div>
+      </div>
+    `;
+
+    const box = $("advancedContent");
+    if(box) box.innerHTML = content + "<br>" + box.innerHTML;
+
+  }catch(e){
+    show(e.message);
+  }
+}
+
+function postListHtml(list, emptyMsg){
+  if(!list || !list.length) return `<div class="empty">${emptyMsg}</div>`;
+  return list.map((p,i)=>`
+    <div class="item ${i===0?'top':''}">
+      <div class="between">
+        <div>
+          <div class="row">
+            <span class="badge ${i===0?'gold':''}">#${i+1}</span>
+            <span class="badge blue">${safe(p.formato || "")}</span>
+            <span class="badge gold">Potencial ${p.potential_score || 0}/100</span>
+            <span class="badge">${safe(p.decisao?.badge || "")}</span>
+          </div>
+          <div class="postTitle">${safe(p.caption || "")}</div>
+          ${p.permalink ? `<a href="${p.permalink}" target="_blank">Abrir publicação</a>` : ""}
+        </div>
+        <div style="min-width:260px">
+          <div class="metricLine" style="grid-template-columns:repeat(2,1fr)">
+            <div class="miniMetric"><small>Alcance</small><strong>${fmt(p.reach)}</strong></div>
+            <div class="miniMetric"><small>Salvos</small><strong>${fmt(p.saved)}</strong></div>
+            <div class="miniMetric"><small>Compart.</small><strong>${fmt(p.shares)}</strong></div>
+            <div class="miniMetric"><small>Taxa salvos</small><strong>${p.taxa_salvamento || 0}%</strong></div>
+          </div>
+        </div>
+      </div>
+      <p class="muted"><strong>Decisão:</strong> ${safe(p.decisao?.reason || "")}</p>
+      <p class="muted"><strong>Próximo passo:</strong> ${safe(p.decisao?.next_step || "")}</p>
+    </div>
+  `).join("");
+}
+
+function formatTableHtml(formatos){
+  if(!formatos || !formatos.length) return `<div class="empty">Sem formatos para comparar.</div>`;
+  return `
+    <table>
+      <thead>
+        <tr><th>Formato</th><th>Posts</th><th>Alcance</th><th>Salvos</th><th>Compart.</th><th>Potencial médio</th><th>Melhor post</th></tr>
+      </thead>
+      <tbody>
+        ${formatos.map(f=>`
+          <tr>
+            <td><span class="badge gold">${safe(f.formato)}</span></td>
+            <td>${fmt(f.posts)}</td>
+            <td>${fmt(f.alcance)}</td>
+            <td>${fmt(f.salvos)}</td>
+            <td>${fmt(f.compartilhamentos)}</td>
+            <td>${f.media_potencial || 0}/100</td>
+            <td>${safe(f.melhor_post?.caption || "")}</td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>`;
+}
+
+function advancedHtml(r){
+  const t = r.totais || {};
+  return `
+    ${r.modo === "cliente_por_arroba_publico" ? `
+      <div class="alert success">
+        Relatório gerado por @ do cliente via dados públicos. Não inclui alcance, salvos ou compartilhamentos.
+      </div>
+      <br>
+    ` : ""}
+
+    <div class="grid four">
+      <div class="stat gold"><small>Posts analisados</small><strong>${fmt(t.posts)}</strong><div class="hint">Base atual</div></div>
+      <div class="stat"><small>Alcance</small><strong>${fmt(t.alcance)}</strong><div class="hint">Visibilidade total</div></div>
+      <div class="stat"><small>Salvos</small><strong>${fmt(t.salvos)}</strong><div class="hint">Valor percebido</div></div>
+      <div class="stat"><small>Potencial médio</small><strong>${t.media_potencial || 0}</strong><div class="hint">Score geral</div></div>
+    </div>
+    <br>
+    <div class="grid mainSplit">
+      <div class="card gold">
+        <div class="eyebrow">Resumo executivo</div>
+        <h2>${safe(r.resumo_executivo || "")}</h2>
+        <p>${safe(r.diagnostico || "")}</p>
+        <div class="row">
+          <span class="badge gold">Taxa salvos ${t.taxa_salvamento || 0}%</span>
+          <span class="badge blue">Taxa compartilhamento ${t.taxa_compartilhamento || 0}%</span>
+          <span class="badge">Média alcance ${fmt(t.media_alcance_por_post)}</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="eyebrow">Melhor formato</div>
+        <h2>${safe(r.melhor_formato?.formato || "Sem dados")}</h2>
+        <p class="muted">Formato com maior leitura combinada de potencial, salvamentos e compartilhamentos.</p>
+        <div class="item">
+          <div class="between"><span>Potencial médio</span><strong>${r.melhor_formato?.media_potencial || 0}/100</strong></div>
+          <div class="between"><span>Alcance médio</span><strong>${fmt(r.melhor_formato?.media_alcance || 0)}</strong></div>
+          <div class="between"><span>Salvos</span><strong>${fmt(r.melhor_formato?.salvos || 0)}</strong></div>
+        </div>
+      </div>
+    </div>
+    <br>
+    <div class="grid two">
+      <div class="card">
+        <div class="eyebrow">Tráfego pago</div>
+        <h2>Conteúdos que podem virar teste</h2>
+        ${postListHtml(r.indicados_para_trafego, "Nenhum conteúdo está pronto para tráfego agora. Melhor ajustar e repetir organicamente primeiro.")}
+      </div>
+      <div class="card">
+        <div class="eyebrow">Não impulsionar</div>
+        <h2>Ajustar antes de colocar verba</h2>
+        ${postListHtml(r.nao_impulsionar, "Nenhum conteúdo crítico identificado como bloqueio de tráfego.")}
+      </div>
+    </div>
+    <br>
+    <div class="card">
+      <div class="eyebrow">Formatos</div>
+      <h2>Desempenho por tipo de conteúdo</h2>
+      <br>
+      ${formatTableHtml(r.formatos)}
+    </div>
+    <br>
+    <div class="grid two">
+      <div class="card">
+        <div class="eyebrow">Repetir</div>
+        <h2>Conteúdos que merecem nova versão</h2>
+        ${postListHtml(r.repetir, "Ainda não há conteúdo forte suficiente para repetir com segurança.")}
+      </div>
+      <div class="card">
+        <div class="eyebrow">Plano 7 dias</div>
+        <h2>Próximas ações</h2>
+        <div class="reportBlock">
+          <ul>${(r.plano_7_dias || []).map(x=>`<li>${safe(x)}</li>`).join("")}</ul>
+        </div>
+        <div class="reportBlock">
+          <h3>Temas recorrentes</h3>
+          <div class="row">${(r.temas_recorrentes || []).map(x=>`<span class="badge">${safe(x.tema)} · ${x.ocorrencias}</span>`).join("") || `<span class="muted">Sem temas suficientes.</span>`}</div>
+        </div>
+      </div>
+    </div>
+    <br>
+    <div class="card gold">
+      <div class="eyebrow">Texto comercial</div>
+      <h2>Análise pronta para apresentar</h2>
+      <pre id="advancedText">${formatAdvanced(r)}</pre>
+    </div>
+  `;
+}
+
+function formatAdvanced(r){
+  const t = r.totais || {};
+  return `RELATÓRIO ESTRATÉGICO AVANÇADO — VÉRTICE IA
+
+Resumo executivo:
+${r.resumo_executivo || ""}
+
+Diagnóstico:
+${r.diagnostico || ""}
+
+Números analisados:
+- Posts: ${t.posts || 0}
+- Alcance total: ${t.alcance || 0}
+- Salvos: ${t.salvos || 0}
+- Compartilhamentos: ${t.compartilhamentos || 0}
+- Taxa de salvamento: ${t.taxa_salvamento || 0}%
+- Taxa de compartilhamento: ${t.taxa_compartilhamento || 0}%
+- Potencial médio: ${t.media_potencial || 0}/100
+
+O que vale testar no tráfego:
+${(r.indicados_para_trafego || []).map(p=>`- ${p.caption} | potencial ${p.potential_score}/100 | ${p.decisao?.next_step || ""}`).join("\n") || "- Nenhum conteúdo pronto para tráfego neste momento."}
+
+O que não vale impulsionar agora:
+${(r.nao_impulsionar || []).map(p=>`- ${p.caption} | motivo: ${p.decisao?.reason || ""}`).join("\n") || "- Nenhum bloqueio crítico identificado."}
+
+O que repetir:
+${(r.repetir || []).map(p=>`- ${p.caption} | ${p.decisao?.next_step || ""}`).join("\n") || "- Ainda não há conteúdo forte suficiente para repetir com segurança."}
+
+Plano de ação para 7 dias:
+- ${(r.plano_7_dias || []).join("\n- ")}
+
+Texto para cliente:
+${r.texto_cliente || ""}`;
+}
+
+async function copyAdvanced(){
+  const text = state.advanced ? formatAdvanced(state.advanced) : "";
+  if(!text){ show("Gere o relatório estratégico primeiro."); return; }
+  await navigator.clipboard.writeText(text);
+  show("Análise estratégica copiada.", "success");
+}
+
+
+async function logoutVertice(){
+  await fetch("/api/logout", {method:"POST"});
+  window.location.href = "/login";
+}
+
+
+function escapeReportHtml(text){
+  return String(text || "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function getClientReportDataSafe(){
+  const get = (id, fallback="") => {
+    const el = document.getElementById(id);
+    if(el) return el.value.trim();
+    return localStorage.getItem("vertice_report_" + id) || fallback;
+  };
+
+  return {
+    nome: get("clientName"),
+    instagram: get("clientInstagram"),
+    segmento: get("clientSegment"),
+    objetivo: get("clientGoal"),
+    responsavel: get("clientResponsible", "VÉRTICE IA"),
+    observacoes: get("clientNotes")
+  };
+}
+
+function advancedClientHtmlSimple(){
+  if(!state.advanced) return "";
+
+  const r = state.advanced;
+  const t = r.totais || {};
+  const client = typeof getClientReportData === "function" ? getClientReportData() : getClientReportDataSafe();
+  const hoje = new Date().toLocaleDateString("pt-BR");
+
+  const trafego = (r.indicados_para_trafego || []).map(p => `
+    <li><strong>${escapeReportHtml(p.caption)}</strong><br>
+    Potencial: ${p.potential_score || 0}/100 • Alcance: ${fmt(p.reach)} • Salvos: ${fmt(p.saved)} • Compartilhamentos: ${fmt(p.shares)}<br>
+    <em>${escapeReportHtml(p.decisao?.next_step || "")}</em></li>
+  `).join("");
+
+  const repetir = (r.repetir || []).map(p => `
+    <li><strong>${escapeReportHtml(p.caption)}</strong><br>
+    ${escapeReportHtml(p.decisao?.next_step || "")}</li>
+  `).join("");
+
+  const nao = (r.nao_impulsionar || []).map(p => `
+    <li><strong>${escapeReportHtml(p.caption)}</strong><br>
+    Motivo: ${escapeReportHtml(p.decisao?.reason || "")}</li>
+  `).join("");
+
+  const plano = (r.plano_7_dias || []).map(x => `<li>${escapeReportHtml(x)}</li>`).join("");
+
+  return `<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Relatório Estratégico — VÉRTICE IA</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#f8fafc;color:#111827;font-family:Arial,Helvetica,sans-serif;line-height:1.55}
+  .cover{background:linear-gradient(135deg,#020617,#0f172a);color:white;padding:52px 42px;border-bottom:8px solid #fbbf24}
+  .cover h1{font-size:36px;margin:0 0 12px;letter-spacing:-.03em}
+  .cover p{color:#cbd5e1}
+  main{padding:34px 42px;max-width:980px;margin:auto;background:white}
+  h2{font-size:22px;margin:30px 0 12px;border-bottom:2px solid #e5e7eb;padding-bottom:8px}
+  .box{border:1px solid #e5e7eb;border-left:5px solid #fbbf24;border-radius:14px;padding:18px;background:#fffaf0;margin:18px 0}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0}
+  .card{border:1px solid #e5e7eb;border-radius:14px;padding:16px;background:#f8fafc}
+  .card small{display:block;color:#475569;text-transform:uppercase;font-size:10px;font-weight:700;letter-spacing:.1em}
+  .card strong{display:block;font-size:24px;margin-top:6px}
+  li{margin-bottom:10px}
+  .footer{margin-top:36px;padding-top:18px;border-top:1px solid #e5e7eb;color:#475569;font-size:12px}
+  @media print{
+    body{background:white}
+    main{padding:24px 32px}
+    .cover{padding:42px 32px}
+    .box,.card,li{break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+<section class="cover">
+  <h1>Relatório Estratégico — VÉRTICE IA</h1>
+  <p>Leitura baseada em dados reais do Instagram para orientar posicionamento, conteúdo e tráfego.</p>
+  <p><strong>Data:</strong> ${hoje}</p>
+</section>
+
+<main>
+  <h2>Dados da entrega</h2>
+  <div class="box">
+    <p><strong>Cliente:</strong> ${escapeReportHtml(client.nome || "Não informado")}</p>
+    <p><strong>Instagram analisado:</strong> ${escapeReportHtml(client.instagram || "Não informado")}</p>
+    <p><strong>Segmento:</strong> ${escapeReportHtml(client.segmento || "Não informado")}</p>
+    <p><strong>Objetivo:</strong> ${escapeReportHtml(client.objetivo || "Não informado")}</p>
+    <p><strong>Responsável:</strong> ${escapeReportHtml(client.responsavel || "VÉRTICE IA")}</p>
+    <p><strong>Observações:</strong> ${escapeReportHtml(client.observacoes || "Sem observações adicionais.")}</p>
+  </div>
+
+  <h2>Resumo executivo</h2>
+  <div class="box">
+    <h3>${escapeReportHtml(r.resumo_executivo || "")}</h3>
+    <p>${escapeReportHtml(r.diagnostico || "")}</p>
+  </div>
+
+  <div class="grid">
+    <div class="card"><small>Posts</small><strong>${fmt(t.posts)}</strong></div>
+    <div class="card"><small>${t.seguidores ? "Seguidores" : "Alcance"}</small><strong>${fmt(t.seguidores || t.alcance || 0)}</strong></div>
+    <div class="card"><small>${t.interacoes_publicas ? "Interações" : "Salvos"}</small><strong>${fmt(t.interacoes_publicas || t.salvos || 0)}</strong></div>
+    <div class="card"><small>Potencial</small><strong>${t.media_potencial || 0}</strong></div>
+  </div>
+
+  <h2>O que pode virar tráfego</h2>
+  <ul>${trafego || "<li>Nenhum conteúdo pronto para tráfego neste momento.</li>"}</ul>
+
+  <h2>O que repetir</h2>
+  <ul>${repetir || "<li>Ainda não há conteúdo forte suficiente para repetir com segurança.</li>"}</ul>
+
+  <h2>O que não impulsionar agora</h2>
+  <ul>${nao || "<li>Nenhum bloqueio crítico identificado.</li>"}</ul>
+
+  <h2>Plano de ação para 7 dias</h2>
+  <ul>${plano}</ul>
+
+  <h2>Texto comercial</h2>
+  <p>${escapeReportHtml(r.texto_cliente || "")}</p>
+
+  <div class="footer">
+    Relatório gerado pela VÉRTICE IA. A análise orienta posicionamento, consistência e decisões baseadas em dados reais.
+  </div>
+</main>
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>`;
+}
+
+function downloadAdvancedHtml(){
+  if(!state.advanced){
+    show("Gere o relatório estratégico primeiro.");
+    return;
+  }
+
+  const html = advancedClientHtmlSimple();
+  const blob = new Blob([html], {type:"text/html;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const date = new Date().toISOString().slice(0,10);
+
+  a.href = url;
+  a.download = `relatorio-estrategico-vertice-ia-${date}.html`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  URL.revokeObjectURL(url);
+  show("Relatório baixado em HTML. Abra o arquivo e use Ctrl+P para salvar em PDF.", "success");
+}
+
+function printAdvancedReport(){
+  if(!state.advanced){
+    show("Gere o relatório estratégico primeiro.");
+    return;
+  }
+
+  const reportWindow = window.open("", "_blank");
+  reportWindow.document.open();
+  reportWindow.document.write(advancedClientHtmlSimple());
+  reportWindow.document.close();
+  reportWindow.focus();
+
+  setTimeout(() => {
+    reportWindow.print();
+  }, 700);
+}
+
+
+// ==============================
+// ANÁLISE MANUAL DO PERFIL DO CLIENTE
+// ==============================
+
+function pcEscape(text){
+  return String(text || "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function pcGet(id){
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : "";
+}
+
+function pcSet(id, value){
+  const el = document.getElementById(id);
+  if(el) el.value = value || "";
+}
+
+function savePerfilCliente(){
+  const ids = [
+    "pcNome","pcInstagram","pcSegmento","pcObjetivo",
+    "pcBio","pcDestaques","pcPosts","pcForcas","pcAjustes","pcObs"
+  ];
+
+  ids.forEach(id => {
+    localStorage.setItem("vertice_perfil_cliente_" + id, pcGet(id));
+  });
+
+  show("Análise do perfil do cliente salva.", "success");
+}
+
+function loadPerfilCliente(){
+  const ids = [
+    "pcNome","pcInstagram","pcSegmento","pcObjetivo",
+    "pcBio","pcDestaques","pcPosts","pcForcas","pcAjustes","pcObs"
+  ];
+
+  ids.forEach(id => {
+    pcSet(id, localStorage.getItem("vertice_perfil_cliente_" + id) || "");
+  });
+
+  renderPrintPreview();
+}
+
+function clearPerfilCliente(){
+  const ids = [
+    "pcNome","pcInstagram","pcSegmento","pcObjetivo",
+    "pcBio","pcDestaques","pcPosts","pcForcas","pcAjustes","pcObs"
+  ];
+
+  ids.forEach(id => {
+    localStorage.removeItem("vertice_perfil_cliente_" + id);
+    pcSet(id, "");
+  });
+
+  state.perfilClientePrints = [];
+  renderPrintPreview();
+  const box = document.getElementById("perfilClienteResultado");
+  if(box) box.innerHTML = `<div class="empty">Preencha os campos e clique em <strong>Gerar análise do perfil</strong>.</div>`;
+
+  show("Campos limpos.", "success");
+}
+
+function getPerfilClienteData(){
+  return {
+    nome: pcGet("pcNome"),
+    instagram: pcGet("pcInstagram"),
+    segmento: pcGet("pcSegmento"),
+    objetivo: pcGet("pcObjetivo"),
+    bio: pcGet("pcBio"),
+    destaques: pcGet("pcDestaques"),
+    posts: pcGet("pcPosts"),
+    forcas: pcGet("pcForcas"),
+    ajustes: pcGet("pcAjustes"),
+    obs: pcGet("pcObs")
+  };
+}
+
+function analisarBioTexto(bio){
+  const b = (bio || "").toLowerCase();
+
+  const checks = [
+    {
+      nome: "Clareza de posicionamento",
+      ok: b.length >= 80,
+      sim: "A bio possui volume suficiente para comunicar posicionamento.",
+      nao: "A bio parece curta. Precisa deixar mais claro o que a empresa faz, para quem faz e por que seguir."
+    },
+    {
+      nome: "Chamada para ação",
+      ok: /agende|chame|clique|link|whatsapp|direct|contato|orçamento|orcamento/.test(b),
+      sim: "Existe chamada para ação.",
+      nao: "Falta uma chamada direta para ação: agendar, chamar no WhatsApp, pedir orçamento ou acessar o link."
+    },
+    {
+      nome: "Proposta de valor",
+      ok: /especialista|resultado|transform|solução|solucao|experiência|experiencia|estratégia|estrategia|saúde|saude|beleza|pilates|consultoria|personalizado/.test(b),
+      sim: "A bio sinaliza proposta de valor.",
+      nao: "A proposta de valor ainda precisa ficar mais forte. O visitante precisa entender rapidamente o benefício."
+    },
+    {
+      nome: "Localização ou área de atuação",
+      ok: /sp|mg|rj|go|brasil|online|presencial|cidade|região|regiao|bairro/.test(b),
+      sim: "Existe sinal de localização ou área de atuação.",
+      nao: "Considere adicionar cidade, bairro, região ou atendimento online/presencial."
+    }
+  ];
+
+  return checks;
+}
+
+function analisarDestaquesTexto(destaques){
+  const d = (destaques || "").toLowerCase();
+
+  const essenciais = [
+    ["Serviços", /servi|proced|aulas|planos|cardápio|cardapio|produtos/],
+    ["Depoimentos", /depo|feedback|cliente|resultado|antes|depois/],
+    ["Localização", /local|endereço|endereco|onde|rota|mapa/],
+    ["Agenda/Contato", /agenda|horário|horario|whatsapp|contato|marcar/],
+    ["Dúvidas", /dúvida|duvida|faq|perguntas/],
+    ["Bastidores/Autoridade", /bastidor|sobre|equipe|profissional|autoridade/]
+  ];
+
+  return essenciais.map(([nome, regex]) => ({
+    nome,
+    ok: regex.test(d),
+    sim: `${nome} aparece nos destaques.`,
+    nao: `Criar ou melhorar destaque de ${nome}.`
+  }));
+}
+
+function gerarAnalisePerfilCliente(){
+  const data = getPerfilClienteData();
+  savePerfilCliente();
+
+  const bioChecks = analisarBioTexto(data.bio);
+  const destaqueChecks = analisarDestaquesTexto(data.destaques);
+
+  const bioOk = bioChecks.filter(x => x.ok).length;
+  const destaqueOk = destaqueChecks.filter(x => x.ok).length;
+
+  let nivel = "Precisa de ajuste";
+  let badge = "red";
+
+  if(bioOk >= 3 && destaqueOk >= 4){
+    nivel = "Perfil bem estruturado";
+    badge = "green";
+  }else if(bioOk >= 2 && destaqueOk >= 2){
+    nivel = "Perfil com boa base";
+    badge = "gold";
+  }
+
+  const html = `
+    <div class="card gold">
+      <div class="between">
+        <div>
+          <div class="eyebrow">Diagnóstico do perfil</div>
+          <h2>${pcEscape(data.nome || "Cliente não informado")}</h2>
+          <p class="muted">${pcEscape(data.instagram || "")} • ${pcEscape(data.segmento || "Segmento não informado")}</p>
+        </div>
+        <span class="badge ${badge}">${nivel}</span>
+      </div>
+
+      <div class="reportBlock">
+        <h3>Resumo executivo</h3>
+        <p>
+          A análise do perfil mostra a estrutura atual da presença digital do cliente considerando bio,
+          destaques, leitura visual do feed/posts e prints do painel profissional. O objetivo é identificar
+          o que já comunica valor e o que precisa ser ajustado para melhorar posicionamento.
+        </p>
+      </div>
+    </div>
+
+    <br>
+
+    <div class="grid two">
+      <div class="card">
+        <div class="eyebrow">Bio</div>
+        <h2>Análise da bio</h2>
+        ${bioChecks.map(x => `
+          <div class="item">
+            <span class="badge ${x.ok ? "green" : "red"}">${x.ok ? "OK" : "Ajustar"}</span>
+            <h3 style="margin-top:10px">${pcEscape(x.nome)}</h3>
+            <p>${pcEscape(x.ok ? x.sim : x.nao)}</p>
+          </div>
+        `).join("")}
+      </div>
+
+      <div class="card">
+        <div class="eyebrow">Destaques</div>
+        <h2>Análise dos destaques</h2>
+        ${destaqueChecks.map(x => `
+          <div class="item">
+            <span class="badge ${x.ok ? "green" : "gold"}">${x.ok ? "Presente" : "Criar/Melhorar"}</span>
+            <h3 style="margin-top:10px">${pcEscape(x.nome)}</h3>
+            <p>${pcEscape(x.ok ? x.sim : x.nao)}</p>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+
+    <br>
+
+    <div class="grid two">
+      <div class="card">
+        <div class="eyebrow">Feed e posts</div>
+        <h2>Leitura dos conteúdos</h2>
+        <div class="reportBlock">
+          <h3>Observação registrada</h3>
+          <p>${pcEscape(data.posts || "Nenhuma observação sobre posts foi preenchida.")}</p>
+        </div>
+
+        <div class="reportBlock">
+          <h3>Pontos fortes</h3>
+          <p>${pcEscape(data.forcas || "Nenhum ponto forte preenchido.")}</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="eyebrow">Ajustes</div>
+        <h2>Recomendações estratégicas</h2>
+        <div class="reportBlock">
+          <h3>Pontos de ajuste</h3>
+          <p>${pcEscape(data.ajustes || "Nenhum ponto de ajuste preenchido.")}</p>
+        </div>
+
+        <div class="reportBlock">
+          <h3>Observações adicionais</h3>
+          <p>${pcEscape(data.obs || "Sem observações adicionais.")}</p>
+        </div>
+      </div>
+    </div>
+
+    <br>
+
+    <div class="card gold">
+      <div class="eyebrow">Plano sugerido</div>
+      <h2>Plano de ação inicial</h2>
+      <div class="reportBlock">
+        <ul>
+          <li>Ajustar a bio para comunicar: o que faz, para quem faz, diferencial e chamada para ação.</li>
+          <li>Organizar destaques essenciais: serviços, depoimentos, localização, dúvidas e contato.</li>
+          <li>Revisar os 9 primeiros posts para garantir clareza visual e posicionamento.</li>
+          <li>Transformar prints do painel profissional em diagnóstico de performance.</li>
+          <li>Definir próximos conteúdos com base nos pontos fortes e nos ajustes identificados.</li>
+        </ul>
+      </div>
+    </div>
+  `;
+
+  const box = document.getElementById("perfilClienteResultado");
+  if(box) box.innerHTML = html;
+
+  show("Análise do perfil gerada.", "success");
+}
+
+function handlePerfilPrints(input){
+  const files = Array.from(input.files || []);
+  if(!files.length) return;
+
+  state.perfilClientePrints = state.perfilClientePrints || [];
+
+  files.forEach(file => {
+    const reader = new FileReader();
+
+    reader.onload = function(e){
+      state.perfilClientePrints.push({
+        name: file.name,
+        data: e.target.result
+      });
+
+      renderPrintPreview();
+    };
+
+    reader.readAsDataURL(file);
+  });
+
+  input.value = "";
+}
+
+function renderPrintPreview(){
+  const box = document.getElementById("perfilPrintPreview");
+  if(!box) return;
+
+  const prints = state.perfilClientePrints || [];
+
+  if(!prints.length){
+    box.innerHTML = `<div class="empty">Nenhum print inserido ainda.</div>`;
+    return;
+  }
+
+  box.innerHTML = `
+    <div class="grid two">
+      ${prints.map((img, i) => `
+        <div class="item">
+          <div class="between">
+            <span class="badge gold">Print ${i + 1}</span>
+            <button class="btn ghost" onclick="removePerfilPrint(${i})">Remover</button>
+          </div>
+          <br>
+          <img src="" style="width:100%;border-radius:16px;border:1px solid rgba(148,163,184,.18);">
+          <p class="muted">${pcEscape(img.name)}</p>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+function removePerfilPrint(index){
+  state.perfilClientePrints = state.perfilClientePrints || [];
+  state.perfilClientePrints.splice(index, 1);
+  renderPrintPreview();
+}
+
+function clearPerfilPrints(){
+  state.perfilClientePrints = [];
+  renderPrintPreview();
+  show("Prints removidos.", "success");
+}
+
+function perfilClienteReportHtml(){
+  const data = getPerfilClienteData();
+  const hoje = new Date().toLocaleDateString("pt-BR");
+  const prints = state.perfilClientePrints || [];
+  const bioChecks = analisarBioTexto(data.bio);
+  const destaqueChecks = analisarDestaquesTexto(data.destaques);
+
+  return `<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Análise de Perfil — VÉRTICE IA</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f8fafc;color:#111827;font-family:Arial,Helvetica,sans-serif;line-height:1.55}
+.cover{background:linear-gradient(135deg,#020617,#0f172a);color:white;padding:52px 42px;border-bottom:8px solid #fbbf24}
+.cover h1{font-size:36px;margin:0 0 12px;letter-spacing:-.03em}
+.cover p{color:#cbd5e1}
+main{padding:34px 42px;max-width:980px;margin:auto;background:white}
+h2{font-size:22px;margin:30px 0 12px;border-bottom:2px solid #e5e7eb;padding-bottom:8px}
+.box{border:1px solid #e5e7eb;border-left:5px solid #fbbf24;border-radius:14px;padding:18px;background:#fffaf0;margin:18px 0}
+.card{border:1px solid #e5e7eb;border-radius:14px;padding:16px;background:#f8fafc;margin:12px 0}
+.badge{display:inline-block;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:700;background:#fef3c7;color:#92400e}
+.badge.green{background:#dcfce7;color:#166534}
+.badge.red{background:#ffe4e6;color:#9f1239}
+img{max-width:100%;border-radius:14px;border:1px solid #e5e7eb;margin:12px 0}
+li{margin-bottom:8px}
+.footer{margin-top:36px;padding-top:18px;border-top:1px solid #e5e7eb;color:#475569;font-size:12px}
+@media print{
+  body{background:white}
+  main{padding:24px 32px}
+  .cover{padding:42px 32px}
+  .box,.card,img{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<section class="cover">
+  <h1>Análise de Perfil — VÉRTICE IA</h1>
+  <p>Diagnóstico manual de bio, destaques, posts e prints do painel profissional.</p>
+  <p><strong>Data:</strong> ${hoje}</p>
+</section>
+
+<main>
+  <h2>Dados do cliente</h2>
+  <div class="box">
+    <p><strong>Cliente:</strong> ${pcEscape(data.nome || "Não informado")}</p>
+    <p><strong>Instagram:</strong> ${pcEscape(data.instagram || "Não informado")}</p>
+    <p><strong>Segmento:</strong> ${pcEscape(data.segmento || "Não informado")}</p>
+    <p><strong>Objetivo:</strong> ${pcEscape(data.objetivo || "Não informado")}</p>
+  </div>
+
+  <h2>Bio atual</h2>
+  <div class="box">
+    <p>${pcEscape(data.bio || "Bio não preenchida.")}</p>
+  </div>
+
+  <h2>Análise da bio</h2>
+  ${bioChecks.map(x => `
+    <div class="card">
+      <span class="badge ${x.ok ? "green" : "red"}">${x.ok ? "OK" : "Ajustar"}</span>
+      <h3>${pcEscape(x.nome)}</h3>
+      <p>${pcEscape(x.ok ? x.sim : x.nao)}</p>
+    </div>
+  `).join("")}
+
+  <h2>Destaques</h2>
+  <div class="box">
+    <p>${pcEscape(data.destaques || "Destaques não preenchidos.")}</p>
+  </div>
+
+  <h2>Análise dos destaques</h2>
+  ${destaqueChecks.map(x => `
+    <div class="card">
+      <span class="badge ${x.ok ? "green" : ""}">${x.ok ? "Presente" : "Criar/Melhorar"}</span>
+      <h3>${pcEscape(x.nome)}</h3>
+      <p>${pcEscape(x.ok ? x.sim : x.nao)}</p>
+    </div>
+  `).join("")}
+
+  <h2>Feed e posts</h2>
+  <div class="box"><p>${pcEscape(data.posts || "Nenhuma observação preenchida.")}</p></div>
+
+  <h2>Pontos fortes</h2>
+  <div class="box"><p>${pcEscape(data.forcas || "Nenhum ponto forte preenchido.")}</p></div>
+
+  <h2>Pontos de ajuste</h2>
+  <div class="box"><p>${pcEscape(data.ajustes || "Nenhum ponto de ajuste preenchido.")}</p></div>
+
+  <h2>Observações estratégicas</h2>
+  <div class="box"><p>${pcEscape(data.obs || "Sem observações adicionais.")}</p></div>
+
+  <h2>Prints do painel profissional</h2>
+  ${prints.length ? prints.map((img, i) => `
+    <div class="card">
+      <h3>Print ${i + 1}</h3>
+      <img src="">
+    </div>
+  `).join("") : `<div class="box"><p>Nenhum print foi inserido.</p></div>`}
+
+  <h2>Plano de ação inicial</h2>
+  <div class="box">
+    <ul>
+      <li>Ajustar a bio com posicionamento, diferencial e CTA claro.</li>
+      <li>Organizar destaques essenciais para facilitar decisão do visitante.</li>
+      <li>Revisar feed e posts para fortalecer autoridade e clareza visual.</li>
+      <li>Usar os prints do painel profissional para complementar a análise de performance.</li>
+      <li>Definir próximos conteúdos com base nos pontos fortes e ajustes encontrados.</li>
+    </ul>
+  </div>
+
+  <div class="footer">
+    Relatório gerado pela VÉRTICE IA. Esta análise é manual e estratégica, baseada nas informações e prints inseridos.
+  </div>
+</main>
+
+
+
+
+</body>
+</html>`;
+}
+
+function baixarPerfilClienteHtml(){
+  const html = perfilClienteReportHtml();
+  const blob = new Blob([html], {type:"text/html;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const date = new Date().toISOString().slice(0,10);
+
+  a.href = url;
+  a.download = `analise-perfil-cliente-vertice-ia-${date}.html`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  URL.revokeObjectURL(url);
+  show("Análise baixada em HTML.", "success");
+}
+
+function imprimirPerfilClientePdf(){
+  const html = perfilClienteReportHtml();
+  const w = window.open("", "_blank");
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+
+  setTimeout(() => {
+    w.print();
+  }, 700);
+}
+
+
+async function buscarPerfilClienteAutomatico(){
+  const raw = pcGet("pcInstagram");
+
+  if(!raw){
+    show("Cole o link ou @ do perfil do cliente no campo Instagram.");
+    return;
+  }
+
+  try{
+    show("Buscando perfil público e lendo posts recentes...", "success");
+
+    const data = await api(`/api/profile-public-analysis?profile=${encodeURIComponent(raw)}&limit=12`);
+    const profile = data.profile || {};
+    const analysis = data.analysis || {};
+
+    pcSet("pcNome", profile.name || profile.username || "");
+    pcSet("pcInstagram", profile.username ? "@" + profile.username : raw);
+    pcSet("pcBio", profile.biography || "");
+
+    if(!pcGet("pcDestaques")){
+      pcSet(
+        "pcDestaques",
+        "Destaques não foram lidos automaticamente. Inserir manualmente ou adicionar print dos destaques."
+      );
+    }
+
+    const evidencias = (analysis.evidence || []).map(x => "- " + x).join("\\n");
+    const pilares = (analysis.content_pillars || []).map(x => `- ${x.pillar}: ${x.evidence}`).join("\\n");
+
+    pcSet("pcPosts", [
+      "POSICIONAMENTO IDENTIFICADO SEM ACHISMO",
+      analysis.positioning_text || "",
+      "",
+      "LEITURA DOS POSTS",
+      analysis.posts_reading || "",
+      "",
+      "EVIDÊNCIAS USADAS",
+      evidencias || "Nenhuma evidência suficiente retornada.",
+      "",
+      "PILARES IDENTIFICADOS",
+      pilares || "Nenhum pilar forte identificado com segurança."
+    ].join("\\n"));
+
+    pcSet("pcForcas", (analysis.strengths || []).map(x => "- " + x).join("\\n"));
+    pcSet("pcAjustes", (analysis.adjustments || []).map(x => "- " + x).join("\\n"));
+
+    pcSet("pcObs", [
+      "POSICIONAMENTO RECOMENDADO",
+      analysis.recommended_positioning || "",
+      "",
+      "RECOMENDAÇÕES COM BASE NAS EVIDÊNCIAS",
+      (analysis.recommendations || []).map(x => "- " + x).join("\\n")
+    ].join("\\n"));
+
+    savePerfilCliente();
+
+    let topPostsHtml = "";
+
+    if((analysis.top_posts || []).length){
+      topPostsHtml = `
+        <div class="card">
+          <div class="eyebrow">Posts lidos automaticamente</div>
+          <h2>Posts com maior resposta pública</h2>
+          ${(analysis.top_posts || []).map((p, i) => `
+            <div class="item">
+              <div class="row">
+                <span class="badge gold">#${i + 1}</span>
+                <span class="badge">${pcEscape(p.media_type || "")}</span>
+                <span class="badge green">${fmt(p.like_count || 0)} curtidas</span>
+                <span class="badge blue">${fmt(p.comments_count || 0)} comentários</span>
+              </div>
+              <div class="postTitle">${pcEscape(p.caption || "Publicação sem legenda")}</div>
+              ${p.permalink ? `<a href="${p.permalink}" target="_blank">Abrir post</a>` : ""}
+            </div>
+          `).join("")}
+        </div>
+        <br>
+      `;
+    }
+
+    const box = document.getElementById("perfilClienteResultado");
+
+    if(box){
+      box.innerHTML = `
+        <div class="alert success">
+          Perfil localizado automaticamente. A análise agora usa evidências reais da bio, legendas, curtidas e comentários públicos — sem achismo.
+          Destaques e painel profissional ainda precisam ser inseridos manualmente ou por prints.
+        </div>
+
+        <div class="card gold">
+          <div class="between">
+            <div>
+              <div class="eyebrow">Perfil localizado</div>
+              <h2>@${pcEscape(profile.username || "")}</h2>
+              <p class="muted">${pcEscape(profile.name || "")}</p>
+            </div>
+            <span class="badge gold">Leitura pública</span>
+          </div>
+
+          <div class="grid four">
+            <div class="stat gold"><small>Seguidores</small><strong>${fmt(profile.followers_count || 0)}</strong></div>
+            <div class="stat"><small>Total de posts</small><strong>${fmt(profile.media_count || 0)}</strong></div>
+            <div class="stat"><small>Posts lidos</small><strong>${fmt((data.posts || []).length)}</strong></div>
+            <div class="stat"><small>Fonte</small><strong>Meta</strong></div>
+          </div>
+
+          <div class="reportBlock">
+            <h3>Limite da leitura automática</h3>
+            <p>${pcEscape(data.aviso || "")}</p>
+          </div>
+        </div>
+
+        <br>
+
+        ${topPostsHtml}
+
+        <div class="empty">
+          Agora revise os campos preenchidos, adicione prints do painel profissional e clique em
+          <strong>Gerar análise do perfil</strong>.
+        </div>
+      `;
+    }
+
+    show("Leitura estratégica concluída. Revise as evidências, complemente os destaques/prints e gere a análise.", "success");
+
+  }catch(e){
+    show(e.message);
+  }
+}
+
+function renderPerfilCliente(){
+  $("perfilCliente").innerHTML = `
+    <div class="card gold">
+      <div class="between">
+        <div>
+          <div class="eyebrow">Análise manual</div>
+          <h2>Análise do Perfil do Cliente</h2>
+          <p class="muted">
+            Use esta área quando o cliente ainda não conectou a conta Meta. A análise será feita com base na bio,
+            destaques, posts observados e prints do painel profissional.
+          </p>
+        </div>
+        <span class="badge gold">Não depende da API do cliente</span>
+      </div>
+    </div>
+
+    <br>
+
+    <div class="card">
+      <div class="eyebrow">Dados do perfil</div>
+      <h2>Informações do cliente</h2>
+
+      <div class="grid two">
+        <div>
+          <label class="muted">Nome do cliente</label>
+          <input id="pcNome" placeholder="Ex: Espaço TM Pilates" style="width:100%;border-radius:14px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:12px;margin-top:6px;">
+        </div>
+
+        <div>
+          <label class="muted">Instagram</label>
+          <input id="pcInstagram" placeholder="Ex: @espacotmpilates ou https://instagram.com/espacotmpilates" style="width:100%;border-radius:14px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:12px;margin-top:6px;">
+        </div>
+
+        <div>
+          <label class="muted">Segmento</label>
+          <input id="pcSegmento" placeholder="Ex: Pilates, estética, alimentação..." style="width:100%;border-radius:14px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:12px;margin-top:6px;">
+        </div>
+
+        <div>
+          <label class="muted">Objetivo da análise</label>
+          <input id="pcObjetivo" placeholder="Ex: melhorar posicionamento e identificar ajustes do perfil" style="width:100%;border-radius:14px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:12px;margin-top:6px;">
+        </div>
+      </div>
+    </div>
+
+    <br>
+
+    <div class="grid two">
+      <div class="card">
+        <div class="eyebrow">Bio</div>
+        <h2>Bio atual</h2>
+        <textarea id="pcBio" placeholder="Cole aqui a bio atual do cliente..." style="width:100%;min-height:150px;border-radius:16px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:14px;font-family:inherit;resize:vertical;"></textarea>
+      </div>
+
+      <div class="card">
+        <div class="eyebrow">Destaques</div>
+        <h2>Destaques atuais</h2>
+        <textarea id="pcDestaques" placeholder="Liste os destaques atuais. Ex: Sobre, Serviços, Depoimentos, Localização..." style="width:100%;min-height:150px;border-radius:16px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:14px;font-family:inherit;resize:vertical;"></textarea>
+      </div>
+    </div>
+
+    <br>
+
+    <div class="grid two">
+      <div class="card">
+        <div class="eyebrow">Feed e posts</div>
+        <h2>Leitura dos posts</h2>
+        <textarea id="pcPosts" placeholder="Descreva como está o feed: frequência, tipos de post, clareza visual, conteúdo de autoridade, ofertas..." style="width:100%;min-height:150px;border-radius:16px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:14px;font-family:inherit;resize:vertical;"></textarea>
+      </div>
+
+      <div class="card">
+        <div class="eyebrow">Diagnóstico</div>
+        <h2>Pontos fortes</h2>
+        <textarea id="pcForcas" placeholder="Ex: boa identidade visual, autoridade, frequência, provas sociais..." style="width:100%;min-height:150px;border-radius:16px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:14px;font-family:inherit;resize:vertical;"></textarea>
+      </div>
+    </div>
+
+    <br>
+
+    <div class="grid two">
+      <div class="card">
+        <div class="eyebrow">Ajustes</div>
+        <h2>Pontos de ajuste</h2>
+        <textarea id="pcAjustes" placeholder="Ex: bio sem CTA, destaques desorganizados, posts sem direção estratégica..." style="width:100%;min-height:150px;border-radius:16px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:14px;font-family:inherit;resize:vertical;"></textarea>
+      </div>
+
+      <div class="card">
+        <div class="eyebrow">Observações</div>
+        <h2>Observações estratégicas</h2>
+        <textarea id="pcObs" placeholder="Anotações livres para complementar a análise..." style="width:100%;min-height:150px;border-radius:16px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:14px;font-family:inherit;resize:vertical;"></textarea>
+      </div>
+    </div>
+
+    <br>
+
+    <div class="card gold">
+      <div class="eyebrow">Painel profissional</div>
+      <h2>Inserir prints do painel profissional</h2>
+      <p class="muted">Adicione prints de alcance, interações, seguidores, conteúdos, insights ou visão geral do Instagram profissional.</p>
+
+      <input type="file" accept="image/*" multiple onchange="handlePerfilPrints(this)" style="width:100%;border-radius:14px;border:1px dashed rgba(251,191,36,.35);background:#020617;color:white;padding:16px;">
+
+      <br><br>
+
+      <div class="row">
+        <button class="btn secondary" onclick="clearPerfilPrints()">Remover prints</button>
+      </div>
+
+      <br>
+
+      <div id="perfilPrintPreview"></div>
+    </div>
+
+    <br>
+
+    <div class="card">
+      <div class="row">
+        <button class="btn" onclick="buscarPerfilClienteAutomatico()">Buscar perfil pelo link/@</button>
+        <button class="btn secondary" onclick="gerarAnalisePerfilCliente()">Gerar análise do perfil</button>
+        <button class="btn secondary" onclick="savePerfilCliente()">Salvar preenchimento</button>
+        <button class="btn secondary" onclick="baixarPerfilClienteHtml()">Baixar análise</button>
+        <button class="btn ghost" onclick="imprimirPerfilClientePdf()">Salvar em PDF</button>
+        <button class="btn ghost" onclick="clearPerfilCliente()">Limpar tudo</button>
+      </div>
+    </div>
+
+    <br>
+
+    <div id="perfilClienteResultado">
+      <div class="empty">Preencha os campos e clique em <strong>Gerar análise do perfil</strong>.</div>
+    </div>
+  `;
+
+  setTimeout(loadPerfilCliente, 50);
+}
+
+
+// ==============================
+// PROPOSTA COMERCIAL AUTOMÁTICA
+// ==============================
+
+function propEscape(text){
+  return String(text || "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function propGet(id){
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : "";
+}
+
+function propSet(id, value){
+  const el = document.getElementById(id);
+  if(el) el.value = value || "";
+}
+
+function propostaDadosPerfil(){
+  const getPerfil = (id) => {
+    return localStorage.getItem("vertice_perfil_cliente_" + id) || "";
+  };
+
+  return {
+    nome: getPerfil("pcNome"),
+    instagram: getPerfil("pcInstagram"),
+    segmento: getPerfil("pcSegmento"),
+    objetivo: getPerfil("pcObjetivo"),
+    bio: getPerfil("pcBio"),
+    posts: getPerfil("pcPosts"),
+    forcas: getPerfil("pcForcas"),
+    ajustes: getPerfil("pcAjustes"),
+    obs: getPerfil("pcObs")
+  };
+}
+
+function saveProposta(){
+  const ids = [
+    "propCliente","propInstagram","propSegmento","propObjetivo",
+    "propServico","propPlano","propValor","propCondicao",
+    "propPrazo","propEntregas","propObs","propResponsavel"
+  ];
+
+  ids.forEach(id => {
+    localStorage.setItem("vertice_proposta_" + id, propGet(id));
+  });
+
+  show("Proposta salva.", "success");
+}
+
+function loadProposta(){
+  const perfil = propostaDadosPerfil();
+
+  const defaults = {
+    propCliente: perfil.nome,
+    propInstagram: perfil.instagram,
+    propSegmento: perfil.segmento,
+    propObjetivo: perfil.objetivo || "Melhorar posicionamento digital, organizar o perfil e criar uma estratégia de conteúdo mais clara.",
+    propServico: "Gestão estratégica de Instagram e posicionamento digital",
+    propPlano: "Plano recomendado",
+    propValor: "R$ 500,00",
+    propCondicao: "Pagamento quinzenal ou mensal, conforme combinado.",
+    propPrazo: "30 dias de acompanhamento inicial",
+    propEntregas: "Análise do perfil, ajuste de bio, organização de destaques, direcionamento de conteúdo, calendário estratégico, acompanhamento de métricas e relatório de evolução.",
+    propObs: "A proposta não promete clientes automaticamente. O objetivo é melhorar presença digital, clareza de posicionamento e tomada de decisão com base em dados.",
+    propResponsavel: "VÉRTICE IA"
+  };
+
+  Object.keys(defaults).forEach(id => {
+    const saved = localStorage.getItem("vertice_proposta_" + id);
+    propSet(id, saved !== null ? saved : defaults[id]);
+  });
+}
+
+function clearProposta(){
+  const ids = [
+    "propCliente","propInstagram","propSegmento","propObjetivo",
+    "propServico","propPlano","propValor","propCondicao",
+    "propPrazo","propEntregas","propObs","propResponsavel"
+  ];
+
+  ids.forEach(id => {
+    localStorage.removeItem("vertice_proposta_" + id);
+    propSet(id, "");
+  });
+
+  const box = document.getElementById("propostaResultado");
+  if(box) box.innerHTML = `<div class="empty">Preencha os campos e clique em <strong>Gerar proposta</strong>.</div>`;
+
+  show("Proposta limpa.", "success");
+}
+
+function getPropostaData(){
+  return {
+    cliente: propGet("propCliente"),
+    instagram: propGet("propInstagram"),
+    segmento: propGet("propSegmento"),
+    objetivo: propGet("propObjetivo"),
+    servico: propGet("propServico"),
+    plano: propGet("propPlano"),
+    valor: propGet("propValor"),
+    condicao: propGet("propCondicao"),
+    prazo: propGet("propPrazo"),
+    entregas: propGet("propEntregas"),
+    obs: propGet("propObs"),
+    responsavel: propGet("propResponsavel")
+  };
+}
+
+function gerarTextoDiagnosticoProposta(){
+  const perfil = propostaDadosPerfil();
+
+  const ajustes = perfil.ajustes || "O perfil precisa de ajustes de posicionamento, clareza de comunicação e organização estratégica.";
+  const forcas = perfil.forcas || "O perfil possui potencial de desenvolvimento, mas precisa de direção estratégica para transformar presença em autoridade.";
+  const posts = perfil.posts || "A leitura dos posts indica oportunidade de melhorar consistência, clareza dos conteúdos e chamadas para ação.";
+
+  return {
+    forcas,
+    ajustes,
+    posts
+  };
+}
+
+function gerarProposta(){
+  saveProposta();
+
+  const d = getPropostaData();
+  const diag = gerarTextoDiagnosticoProposta();
+
+  const html = `
+    <div class="card gold">
+      <div class="between">
+        <div>
+          <div class="eyebrow">Proposta comercial</div>
+          <h2>${propEscape(d.cliente || "Cliente não informado")}</h2>
+          <p class="muted">${propEscape(d.instagram || "")} • ${propEscape(d.segmento || "Segmento não informado")}</p>
+        </div>
+        <span class="badge gold">${propEscape(d.valor || "Valor a definir")}</span>
+      </div>
+
+      <div class="reportBlock">
+        <h3>Resumo da oportunidade</h3>
+        <p>
+          A proposta foi criada com base na análise do perfil, leitura dos conteúdos e necessidade de melhorar
+          posicionamento digital, clareza da comunicação e consistência estratégica.
+        </p>
+      </div>
+    </div>
+
+    <br>
+
+    <div class="grid two">
+      <div class="card">
+        <div class="eyebrow">Diagnóstico</div>
+        <h2>O que foi identificado</h2>
+
+        <div class="reportBlock">
+          <h3>Pontos fortes</h3>
+          <p>${propEscape(diag.forcas)}</p>
+        </div>
+
+        <div class="reportBlock">
+          <h3>Pontos de ajuste</h3>
+          <p>${propEscape(diag.ajustes)}</p>
+        </div>
+
+        <div class="reportBlock">
+          <h3>Leitura dos conteúdos</h3>
+          <p>${propEscape(diag.posts)}</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="eyebrow">Solução</div>
+        <h2>Serviço recomendado</h2>
+
+        <div class="reportBlock">
+          <h3>${propEscape(d.servico || "Serviço não informado")}</h3>
+          <p><strong>Plano:</strong> ${propEscape(d.plano || "A definir")}</p>
+          <p><strong>Objetivo:</strong> ${propEscape(d.objetivo || "A definir")}</p>
+          <p><strong>Prazo:</strong> ${propEscape(d.prazo || "A definir")}</p>
+        </div>
+
+        <div class="reportBlock">
+          <h3>Entregas previstas</h3>
+          <p>${propEscape(d.entregas || "Entregas não informadas.")}</p>
+        </div>
+      </div>
+    </div>
+
+    <br>
+
+    <div class="card gold">
+      <div class="eyebrow">Investimento</div>
+      <h2>Condição comercial</h2>
+
+      <div class="grid three">
+        <div class="stat gold">
+          <small>Valor</small>
+          <strong>${propEscape(d.valor || "A definir")}</strong>
+          <div class="hint">Investimento recomendado</div>
+        </div>
+
+        <div class="stat">
+          <small>Prazo</small>
+          <strong>${propEscape(d.prazo || "30 dias")}</strong>
+          <div class="hint">Ciclo inicial</div>
+        </div>
+
+        <div class="stat">
+          <small>Responsável</small>
+          <strong>${propEscape(d.responsavel || "VÉRTICE IA")}</strong>
+          <div class="hint">Análise e condução</div>
+        </div>
+      </div>
+
+      <div class="reportBlock">
+        <h3>Condição</h3>
+        <p>${propEscape(d.condicao || "A definir")}</p>
+      </div>
+
+      <div class="reportBlock">
+        <h3>Observação importante</h3>
+        <p>${propEscape(d.obs || "A proposta não promete clientes automaticamente. O objetivo é melhorar posicionamento, clareza estratégica e consistência digital.")}</p>
+      </div>
+    </div>
+
+    <br>
+
+    <div class="card">
+      <div class="eyebrow">Próximos passos</div>
+      <h2>Como iniciar</h2>
+      <div class="reportBlock">
+        <ul>
+          <li>Aprovação da proposta.</li>
+          <li>Alinhamento de objetivo e prioridades do negócio.</li>
+          <li>Organização do perfil: bio, destaques e leitura visual.</li>
+          <li>Definição do calendário estratégico inicial.</li>
+          <li>Acompanhamento dos dados e ajustes de conteúdo.</li>
+        </ul>
+      </div>
+    </div>
+  `;
+
+  const box = document.getElementById("propostaResultado");
+  if(box) box.innerHTML = html;
+
+  show("Proposta gerada.", "success");
+}
+
+function propostaHtmlExport(){
+  const d = getPropostaData();
+  const diag = gerarTextoDiagnosticoProposta();
+  const hoje = new Date().toLocaleDateString("pt-BR");
+
+  return `<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Proposta Comercial — VÉRTICE IA</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f8fafc;color:#111827;font-family:Arial,Helvetica,sans-serif;line-height:1.55}
+.cover{background:linear-gradient(135deg,#020617,#0f172a);color:white;padding:54px 42px;border-bottom:8px solid #fbbf24}
+.cover h1{font-size:38px;margin:0 0 12px;letter-spacing:-.03em}
+.cover p{color:#cbd5e1}
+main{padding:34px 42px;max-width:980px;margin:auto;background:white}
+h2{font-size:22px;margin:30px 0 12px;border-bottom:2px solid #e5e7eb;padding-bottom:8px}
+.box{border:1px solid #e5e7eb;border-left:5px solid #fbbf24;border-radius:14px;padding:18px;background:#fffaf0;margin:18px 0}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}
+.card{border:1px solid #e5e7eb;border-radius:14px;padding:16px;background:#f8fafc}
+.card small{display:block;color:#475569;text-transform:uppercase;font-size:10px;font-weight:700;letter-spacing:.1em}
+.card strong{display:block;font-size:22px;margin-top:6px}
+li{margin-bottom:8px}
+.footer{margin-top:36px;padding-top:18px;border-top:1px solid #e5e7eb;color:#475569;font-size:12px}
+@media print{
+  body{background:white}
+  main{padding:24px 32px}
+  .cover{padding:42px 32px}
+  .box,.card{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<section class="cover">
+  <h1>Proposta Comercial — VÉRTICE IA</h1>
+  <p>Estratégia de posicionamento digital baseada na análise do perfil e oportunidades identificadas.</p>
+  <p><strong>Data:</strong> ${hoje}</p>
+</section>
+
+<main>
+  <h2>Cliente</h2>
+  <div class="box">
+    <p><strong>Cliente:</strong> ${propEscape(d.cliente || "Não informado")}</p>
+    <p><strong>Instagram:</strong> ${propEscape(d.instagram || "Não informado")}</p>
+    <p><strong>Segmento:</strong> ${propEscape(d.segmento || "Não informado")}</p>
+    <p><strong>Objetivo:</strong> ${propEscape(d.objetivo || "Não informado")}</p>
+  </div>
+
+  <h2>Diagnóstico</h2>
+  <div class="box">
+    <h3>Pontos fortes</h3>
+    <p>${propEscape(diag.forcas)}</p>
+
+    <h3>Pontos de ajuste</h3>
+    <p>${propEscape(diag.ajustes)}</p>
+
+    <h3>Leitura dos conteúdos</h3>
+    <p>${propEscape(diag.posts)}</p>
+  </div>
+
+  <h2>Serviço recomendado</h2>
+  <div class="box">
+    <p><strong>Serviço:</strong> ${propEscape(d.servico || "Não informado")}</p>
+    <p><strong>Plano:</strong> ${propEscape(d.plano || "Não informado")}</p>
+    <p><strong>Prazo:</strong> ${propEscape(d.prazo || "Não informado")}</p>
+    <p><strong>Entregas:</strong> ${propEscape(d.entregas || "Não informado")}</p>
+  </div>
+
+  <h2>Investimento</h2>
+  <div class="grid">
+    <div class="card"><small>Valor</small><strong>${propEscape(d.valor || "A definir")}</strong></div>
+    <div class="card"><small>Prazo</small><strong>${propEscape(d.prazo || "30 dias")}</strong></div>
+    <div class="card"><small>Responsável</small><strong>${propEscape(d.responsavel || "VÉRTICE IA")}</strong></div>
+  </div>
+
+  <div class="box">
+    <p><strong>Condição:</strong> ${propEscape(d.condicao || "A definir")}</p>
+    <p><strong>Observação:</strong> ${propEscape(d.obs || "A proposta não promete clientes automaticamente. O objetivo é melhorar posicionamento, clareza estratégica e consistência digital.")}</p>
+  </div>
+
+  <h2>Próximos passos</h2>
+  <div class="box">
+    <ul>
+      <li>Aprovação da proposta.</li>
+      <li>Alinhamento de objetivo e prioridades.</li>
+      <li>Organização de bio, destaques e comunicação do perfil.</li>
+      <li>Construção do calendário estratégico inicial.</li>
+      <li>Acompanhamento de dados e ajustes de conteúdo.</li>
+    </ul>
+  </div>
+
+  <div class="footer">
+    Proposta gerada pela VÉRTICE IA. Esta entrega não promete clientes automaticamente; ela orienta posicionamento, estratégia e consistência digital.
+  </div>
+</main>
+
+
+
+
+</body>
+</html>`;
+}
+
+function baixarProposta(){
+  const html = propostaHtmlExport();
+  const blob = new Blob([html], {type:"text/html;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const date = new Date().toISOString().slice(0,10);
+
+  a.href = url;
+  a.download = `proposta-comercial-vertice-ia-${date}.html`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  URL.revokeObjectURL(url);
+  show("Proposta baixada em HTML.", "success");
+}
+
+function salvarPropostaPdf(){
+  const html = propostaHtmlExport();
+  const w = window.open("", "_blank");
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+
+  setTimeout(() => {
+    w.print();
+  }, 700);
+}
+
+async function copiarPropostaTexto(){
+  const d = getPropostaData();
+  const diag = gerarTextoDiagnosticoProposta();
+
+  const text = `PROPOSTA COMERCIAL — VÉRTICE IA
+
+Cliente: ${d.cliente}
+Instagram: ${d.instagram}
+Segmento: ${d.segmento}
+
+Diagnóstico:
+${diag.ajustes}
+
+Serviço recomendado:
+${d.servico}
+
+Plano:
+${d.plano}
+
+Entregas:
+${d.entregas}
+
+Investimento:
+${d.valor}
+
+Condição:
+${d.condicao}
+
+Prazo:
+${d.prazo}
+
+Observação:
+${d.obs}
+
+Próximos passos:
+Aprovação da proposta, alinhamento de objetivo, organização do perfil e início da estratégia de conteúdo.`;
+
+  await navigator.clipboard.writeText(text);
+  show("Texto da proposta copiado.", "success");
+}
+
+function renderProposta(){
+  $("proposta").innerHTML = `
+    <div class="card gold">
+      <div class="between">
+        <div>
+          <div class="eyebrow">Comercial</div>
+          <h2>Proposta Comercial Automática</h2>
+          <p class="muted">
+            Gere uma proposta com base na análise do perfil do cliente, transformando diagnóstico em oferta de serviço.
+          </p>
+        </div>
+        <span class="badge gold">Venda estratégica</span>
+      </div>
+    </div>
+
+    <br>
+
+    <div class="card">
+      <div class="eyebrow">Dados comerciais</div>
+      <h2>Informações da proposta</h2>
+
+      <div class="grid two">
+        <div>
+          <label class="muted">Cliente</label>
+          <input id="propCliente" placeholder="Nome do cliente" style="width:100%;border-radius:14px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:12px;margin-top:6px;">
+        </div>
+
+        <div>
+          <label class="muted">Instagram</label>
+          <input id="propInstagram" placeholder="@cliente" style="width:100%;border-radius:14px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:12px;margin-top:6px;">
+        </div>
+
+        <div>
+          <label class="muted">Segmento</label>
+          <input id="propSegmento" placeholder="Ex: Pilates, estética, alimentação..." style="width:100%;border-radius:14px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:12px;margin-top:6px;">
+        </div>
+
+        <div>
+          <label class="muted">Responsável</label>
+          <input id="propResponsavel" placeholder="VÉRTICE IA / Júlia Alves" style="width:100%;border-radius:14px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:12px;margin-top:6px;">
+        </div>
+      </div>
+
+      <br>
+
+      <label class="muted">Objetivo da proposta</label>
+      <input id="propObjetivo" placeholder="Objetivo da análise e do serviço" style="width:100%;border-radius:14px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:12px;margin-top:6px;">
+    </div>
+
+    <br>
+
+    <div class="grid two">
+      <div class="card">
+        <div class="eyebrow">Serviço</div>
+        <h2>Oferta recomendada</h2>
+
+        <label class="muted">Serviço recomendado</label>
+        <input id="propServico" placeholder="Ex: Gestão estratégica de Instagram" style="width:100%;border-radius:14px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:12px;margin-top:6px;">
+
+        <br><br>
+
+        <label class="muted">Plano</label>
+        <input id="propPlano" placeholder="Ex: Plano Prata" style="width:100%;border-radius:14px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:12px;margin-top:6px;">
+
+        <br><br>
+
+        <label class="muted">Entregas</label>
+        <textarea id="propEntregas" placeholder="Descreva as entregas do serviço..." style="width:100%;min-height:150px;border-radius:16px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:14px;font-family:inherit;resize:vertical;"></textarea>
+      </div>
+
+      <div class="card">
+        <div class="eyebrow">Investimento</div>
+        <h2>Condição comercial</h2>
+
+        <label class="muted">Valor</label>
+        <input id="propValor" placeholder="Ex: R$ 500,00" style="width:100%;border-radius:14px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:12px;margin-top:6px;">
+
+        <br><br>
+
+        <label class="muted">Prazo</label>
+        <input id="propPrazo" placeholder="Ex: 30 dias" style="width:100%;border-radius:14px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:12px;margin-top:6px;">
+
+        <br><br>
+
+        <label class="muted">Condição de pagamento</label>
+        <input id="propCondicao" placeholder="Ex: pagamento quinzenal ou mensal" style="width:100%;border-radius:14px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:12px;margin-top:6px;">
+
+        <br><br>
+
+        <label class="muted">Observações</label>
+        <textarea id="propObs" placeholder="Observações importantes da proposta..." style="width:100%;min-height:110px;border-radius:16px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:14px;font-family:inherit;resize:vertical;"></textarea>
+      </div>
+    </div>
+
+    <br>
+
+    <div class="card">
+      <div class="row">
+        <button class="btn" onclick="gerarProposta()">Gerar proposta</button>
+        <button class="btn secondary" onclick="saveProposta()">Salvar proposta</button>
+        <button class="btn secondary" onclick="baixarProposta()">Baixar proposta</button>
+        <button class="btn ghost" onclick="salvarPropostaPdf()">Salvar em PDF</button>
+        <button class="btn ghost" onclick="copiarPropostaTexto()">Copiar texto</button>
+        <button class="btn ghost" onclick="clearProposta()">Limpar</button>
+      </div>
+    </div>
+
+    <br>
+
+    <div id="propostaResultado">
+      <div class="empty">Preencha os campos e clique em <strong>Gerar proposta</strong>.</div>
+    </div>
+  `;
+
+  setTimeout(loadProposta, 50);
+}
+
+
+// ==============================
+// HISTÓRICO COMERCIAL DE CLIENTES
+// ==============================
+
+function histComEscape(text){
+  return String(text || "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function histComGet(id){
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : "";
+}
+
+function histComSet(id, value){
+  const el = document.getElementById(id);
+  if(el) el.value = value || "";
+}
+
+async function histComApi(url, options={}){
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {})
+    }
+  });
+
+  let data = null;
+
+  try{
+    data = await res.json();
+  }catch{
+    data = {};
+  }
+
+  if(!res.ok){
+    const detail = data.detail || data.message || "Erro no histórico comercial.";
+    throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+  }
+
+  return data;
+}
+
+function histComProfilePayload(){
+  const ids = [
+    "pcNome","pcInstagram","pcSegmento","pcObjetivo",
+    "pcBio","pcDestaques","pcPosts","pcForcas","pcAjustes","pcObs"
+  ];
+
+  const payload = {};
+
+  ids.forEach(id => {
+    payload[id] = localStorage.getItem("vertice_perfil_cliente_" + id) || "";
+  });
+
+  return payload;
+}
+
+function histComProposalPayload(){
+  const ids = [
+    "propCliente","propInstagram","propSegmento","propObjetivo",
+    "propServico","propPlano","propValor","propCondicao",
+    "propPrazo","propEntregas","propObs","propResponsavel"
+  ];
+
+  const payload = {};
+
+  ids.forEach(id => {
+    payload[id] = localStorage.getItem("vertice_proposta_" + id) || "";
+  });
+
+  return payload;
+}
+
+function histComFillFromCurrent(){
+  const perfil = histComProfilePayload();
+  const proposta = histComProposalPayload();
+
+  histComSet("histClient", proposta.propCliente || perfil.pcNome || "");
+  histComSet("histInstagram", proposta.propInstagram || perfil.pcInstagram || "");
+  histComSet("histSegment", proposta.propSegmento || perfil.pcSegmento || "");
+  histComSet("histValue", proposta.propValor || "");
+  histComSet("histNotes", proposta.propObs || perfil.pcObs || "");
+
+  show("Dados atuais da análise/proposta puxados para o histórico.", "success");
+}
+
+async function histComSave(){
+  try{
+    const payload = {
+      client: histComGet("histClient"),
+      instagram: histComGet("histInstagram"),
+      segment: histComGet("histSegment"),
+      proposal_value: histComGet("histValue"),
+      proposal_status: histComGet("histStatus"),
+      notes: histComGet("histNotes"),
+      profile_payload: histComProfilePayload(),
+      proposal_payload: histComProposalPayload()
+    };
+
+    const data = await histComApi("/api/commercial-history/save", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+
+    show("Cliente salvo no histórico comercial.", "success");
+
+    await histComList();
+
+    return data;
+
+  }catch(e){
+    show(e.message);
+  }
+}
+
+async function histComList(){
+  try{
+    const q = histComGet("histSearch");
+    const status = histComGet("histFilterStatus");
+
+    const params = new URLSearchParams();
+
+    if(q) params.set("q", q);
+    if(status) params.set("status", status);
+
+    const data = await histComApi(`/api/commercial-history?${params.toString()}`);
+
+    const box = document.getElementById("histComList");
+
+    if(!box) return;
+
+    const items = data.items || [];
+
+    if(!items.length){
+      box.innerHTML = `<div class="empty">Nenhum cliente salvo ainda.</div>`;
+      return;
+    }
+
+    box.innerHTML = `
+      <div class="grid two">
+        ${items.map(item => `
+          <div class="card">
+            <div class="between">
+              <div>
+                <div class="eyebrow">Cliente #${item.id}</div>
+                <h2>${histComEscape(item.client || "Sem nome")}</h2>
+                <p class="muted">${histComEscape(item.instagram || "")} • ${histComEscape(item.segment || "Sem segmento")}</p>
+              </div>
+              <span class="badge gold">${histComEscape(item.proposal_status || "Sem status")}</span>
+            </div>
+
+            <div class="grid two">
+              <div class="stat gold">
+                <small>Valor</small>
+                <strong>${histComEscape(item.proposal_value || "A definir")}</strong>
+                <div class="hint">Proposta</div>
+              </div>
+
+              <div class="stat">
+                <small>Atualizado</small>
+                <strong style="font-size:18px">${histComEscape((item.updated_at || "").replace("T"," ").slice(0,16))}</strong>
+                <div class="hint">Histórico</div>
+              </div>
+            </div>
+
+            <div class="reportBlock">
+              <h3>Observações</h3>
+              <p>${histComEscape(item.notes || "Sem observações.")}</p>
+            </div>
+
+            <div class="row">
+              <button class="btn secondary" onclick="histComLoad(${item.id})">Carregar dados</button>
+              <button class="btn ghost" onclick="histComDelete(${item.id})">Excluir</button>
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    `;
+
+  }catch(e){
+    show(e.message);
+  }
+}
+
+async function histComLoad(id){
+  try{
+    const data = await histComApi(`/api/commercial-history/${id}`);
+    const item = data.item || {};
+
+    const profile = item.profile_payload || {};
+    const proposal = item.proposal_payload || {};
+
+    Object.keys(profile).forEach(key => {
+      localStorage.setItem("vertice_perfil_cliente_" + key, profile[key] || "");
+    });
+
+    Object.keys(proposal).forEach(key => {
+      localStorage.setItem("vertice_proposta_" + key, proposal[key] || "");
+    });
+
+    histComSet("histClient", item.client || "");
+    histComSet("histInstagram", item.instagram || "");
+    histComSet("histSegment", item.segment || "");
+    histComSet("histValue", item.proposal_value || "");
+    histComSet("histStatus", item.proposal_status || "");
+    histComSet("histNotes", item.notes || "");
+
+    show("Dados carregados. Abra Perfil Cliente ou Proposta para revisar.", "success");
+
+  }catch(e){
+    show(e.message);
+  }
+}
+
+async function histComDelete(id){
+  const ok = confirm("Deseja excluir este registro do histórico comercial?");
+
+  if(!ok) return;
+
+  try{
+    await histComApi(`/api/commercial-history/${id}`, {
+      method: "DELETE"
+    });
+
+    show("Registro excluído.", "success");
+
+    await histComList();
+
+  }catch(e){
+    show(e.message);
+  }
+}
+
+function renderHistoricoComercial(){
+  $("historicoComercial").innerHTML = `
+    <div class="card gold">
+      <div class="between">
+        <div>
+          <div class="eyebrow">Base comercial</div>
+          <h2>Histórico Comercial de Clientes</h2>
+          <p class="muted">
+            Salve análises, propostas, valores e status de negociação para acompanhar seus clientes dentro da VÉRTICE IA.
+          </p>
+        </div>
+        <span class="badge gold">SQLite</span>
+      </div>
+    </div>
+
+    <br>
+
+    <div class="card">
+      <div class="eyebrow">Novo registro</div>
+      <h2>Salvar cliente no histórico</h2>
+
+      <div class="grid two">
+        <div>
+          <label class="muted">Cliente</label>
+          <input id="histClient" placeholder="Nome do cliente" style="width:100%;border-radius:14px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:12px;margin-top:6px;">
+        </div>
+
+        <div>
+          <label class="muted">Instagram</label>
+          <input id="histInstagram" placeholder="@cliente" style="width:100%;border-radius:14px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:12px;margin-top:6px;">
+        </div>
+
+        <div>
+          <label class="muted">Segmento</label>
+          <input id="histSegment" placeholder="Ex: Pilates, estética, alimentação..." style="width:100%;border-radius:14px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:12px;margin-top:6px;">
+        </div>
+
+        <div>
+          <label class="muted">Valor da proposta</label>
+          <input id="histValue" placeholder="Ex: R$ 500,00" style="width:100%;border-radius:14px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:12px;margin-top:6px;">
+        </div>
+      </div>
+
+      <br>
+
+      <div class="grid two">
+        <div>
+          <label class="muted">Status comercial</label>
+          <select id="histStatus" style="width:100%;border-radius:14px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:12px;margin-top:6px;">
+            <option>Análise feita</option>
+            <option>Proposta enviada</option>
+            <option>Em negociação</option>
+            <option>Aprovado</option>
+            <option>Recusado</option>
+            <option>Retomar depois</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="muted">Ação recomendada</label>
+          <input placeholder="Ex: chamar no WhatsApp amanhã" style="width:100%;border-radius:14px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:12px;margin-top:6px;">
+        </div>
+      </div>
+
+      <br>
+
+      <label class="muted">Observações comerciais</label>
+      <textarea id="histNotes" placeholder="Ex: cliente demonstrou interesse no plano prata, pediu retorno na próxima semana..." style="width:100%;min-height:120px;border-radius:16px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:14px;font-family:inherit;resize:vertical;margin-top:6px;"></textarea>
+
+      <br><br>
+
+      <div class="row">
+        <button class="btn secondary" onclick="histComFillFromCurrent()">Puxar análise/proposta atual</button>
+        <button class="btn" onclick="histComSave()">Salvar no histórico</button>
+      </div>
+    </div>
+
+    <br>
+
+    <div class="card">
+      <div class="between">
+        <div>
+          <div class="eyebrow">Consulta</div>
+          <h2>Clientes salvos</h2>
+        </div>
+        <button class="btn secondary" onclick="histComList()">Atualizar lista</button>
+      </div>
+
+      <div class="grid two">
+        <div>
+          <label class="muted">Buscar cliente</label>
+          <input id="histSearch" placeholder="Nome, @ ou segmento" oninput="histComList()" style="width:100%;border-radius:14px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:12px;margin-top:6px;">
+        </div>
+
+        <div>
+          <label class="muted">Filtrar por status</label>
+          <select id="histFilterStatus" onchange="histComList()" style="width:100%;border-radius:14px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:12px;margin-top:6px;">
+            <option value="">Todos</option>
+            <option>Análise feita</option>
+            <option>Proposta enviada</option>
+            <option>Em negociação</option>
+            <option>Aprovado</option>
+            <option>Recusado</option>
+            <option>Retomar depois</option>
+          </select>
+        </div>
+      </div>
+
+      <br>
+
+      <div id="histComList">
+        <div class="empty">Clique em <strong>Atualizar lista</strong> para ver os clientes salvos.</div>
+      </div>
+    </div>
+  `;
+
+  setTimeout(histComList, 80);
+}
+
+
+// ==============================
+// CONECTAR CLIENTE META
+// ==============================
+
+function metaEsc(text){
+  return String(text || "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function metaGet(id){
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : "";
+}
+
+async function metaApi(url, options={}){
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {})
+    }
+  });
+
+  let data = null;
+
+  try{
+    data = await res.json();
+  }catch{
+    data = {};
+  }
+
+  if(!res.ok){
+    const detail = data.detail || data.message || "Erro na integração Meta.";
+    throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+  }
+
+  return data;
+}
+
+async function metaCheckConfig(){
+  try{
+    const data = await metaApi("/api/facebook-login/config");
+
+    const box = document.getElementById("metaConfigBox");
+
+    if(!box) return;
+
+    if(data.configured){
+      box.innerHTML = `
+        <div class="alert success">
+          Configuração Meta encontrada. Redirect URI: <strong>${metaEsc(data.redirect_uri)}</strong>
+        </div>
+      `;
+    }else{
+      box.innerHTML = `
+        <div class="alert">
+          Configure META_APP_ID, META_APP_SECRET e META_REDIRECT_URI no backend/.env antes de gerar login para clientes.
+        </div>
+      `;
+    }
+
+  }catch(e){
+    show(e.message);
+  }
+}
+
+async function metaGenerateLogin(){
+  const clientName = metaGet("metaClientName");
+
+  try{
+    const data = await metaApi(`/api/facebook-login/start?client_name=${encodeURIComponent(clientName)}`);
+
+    const box = document.getElementById("metaLoginBox");
+
+    if(box){
+      box.innerHTML = `
+        <div class="card gold">
+          <div class="eyebrow">Link de autorização</div>
+          <h2>Login Facebook do cliente</h2>
+          <p class="muted">Envie este link para o cliente ou abra no navegador para teste.</p>
+
+          <input value="${metaEsc(data.login_url)}" readonly style="width:100%;border-radius:14px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:12px;margin-top:6px;">
+
+          <br><br>
+
+          <div class="row">
+            <button class="btn" onclick="window.open('${data.login_url}', '_blank')">Abrir login</button>
+            <button class="btn secondary" onclick="navigator.clipboard.writeText('${data.login_url}'); show('Link copiado.', 'success')">Copiar link</button>
+          </div>
+
+          <br>
+
+          <div class="alert success">
+            Depois que o cliente concluir o login, clique em <strong>Atualizar contas conectadas</strong>.
+          </div>
+        </div>
+      `;
+    }
+
+    show("Link de login gerado.", "success");
+
+  }catch(e){
+    show(e.message);
+  }
+}
+
+async function metaListAccounts(){
+  try{
+    const data = await metaApi("/api/meta-connected/accounts");
+    const box = document.getElementById("metaAccountsBox");
+
+    if(!box) return;
+
+    const items = data.items || [];
+
+    if(!items.length){
+      box.innerHTML = `<div class="empty">Nenhuma conta conectada ainda.</div>`;
+      return;
+    }
+
+    box.innerHTML = `
+      <div class="grid two">
+        ${items.map(item => `
+          <div class="card">
+            <div class="between">
+              <div>
+                <div class="eyebrow">Conta conectada #${item.id}</div>
+                <h2>@${metaEsc(item.ig_username || "")}</h2>
+                <p class="muted">${metaEsc(item.client_name || "Cliente sem nome")} • Página: ${metaEsc(item.page_name || "")}</p>
+              </div>
+              <span class="badge green">Autorizada</span>
+            </div>
+
+            <div class="reportBlock">
+              <h3>Token</h3>
+              <p>Expira em: ${metaEsc((item.token_expires_at || "").slice(0,19).replace("T"," "))}</p>
+            </div>
+
+            <div class="row">
+              <button class="btn" onclick="metaLoadInsights(${item.id})">Gerar relatório com insights</button>
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    `;
+
+  }catch(e){
+    show(e.message);
+  }
+}
+
+function metaReportHtml(report){
+  const t = report.totais || {};
+  const top = report.top_posts || [];
+
+  return `
+    <div class="card gold">
+      <div class="between">
+        <div>
+          <div class="eyebrow">Relatório com login do cliente</div>
+          <h2>${metaEsc(report.account?.client_name || "Cliente conectado")}</h2>
+          <p class="muted">@${metaEsc(report.account?.ig_username || "")} • dados autorizados via Meta</p>
+        </div>
+        <span class="badge green">Insights reais</span>
+      </div>
+
+      <div class="grid five">
+        <div class="stat gold"><small>Posts</small><strong>${fmt(t.posts || 0)}</strong></div>
+        <div class="stat"><small>Alcance</small><strong>${fmt(t.alcance || 0)}</strong></div>
+        <div class="stat"><small>Salvos</small><strong>${fmt(t.salvos || 0)}</strong></div>
+        <div class="stat"><small>Shares</small><strong>${fmt(t.compartilhamentos || 0)}</strong></div>
+        <div class="stat"><small>Comentários</small><strong>${fmt(t.comentarios || 0)}</strong></div>
+      </div>
+
+      <div class="reportBlock">
+        <h3>Resumo</h3>
+        <p>${metaEsc(report.resumo_executivo || "")}</p>
+        <p>${metaEsc(report.diagnostico || "")}</p>
+      </div>
+    </div>
+
+    <br>
+
+    <div class="grid two">
+      <div class="card">
+        <div class="eyebrow">Evidências</div>
+        <h2>O que os dados mostram</h2>
+        <ul>${(report.evidencias || []).map(x => `<li>${metaEsc(x)}</li>`).join("")}</ul>
+      </div>
+
+      <div class="card">
+        <div class="eyebrow">Estratégia</div>
+        <h2>Recomendações</h2>
+        <ul>${(report.recomendacoes || []).map(x => `<li>${metaEsc(x)}</li>`).join("")}</ul>
+      </div>
+    </div>
+
+    <br>
+
+    <div class="grid two">
+      <div class="card">
+        <div class="eyebrow">Forças</div>
+        <h2>Pontos fortes</h2>
+        <ul>${(report.pontos_fortes || []).map(x => `<li>${metaEsc(x)}</li>`).join("") || "<li>Nenhum ponto forte suficiente identificado.</li>"}</ul>
+      </div>
+
+      <div class="card">
+        <div class="eyebrow">Ajustes</div>
+        <h2>Pontos de ajuste</h2>
+        <ul>${(report.pontos_de_ajuste || []).map(x => `<li>${metaEsc(x)}</li>`).join("") || "<li>Nenhum ajuste crítico identificado.</li>"}</ul>
+      </div>
+    </div>
+
+    <br>
+
+    <div class="card">
+      <div class="eyebrow">Ranking</div>
+      <h2>Posts com maior força estratégica</h2>
+      ${top.map((p, i) => `
+        <div class="item">
+          <div class="row">
+            <span class="badge gold">#${i + 1}</span>
+            <span class="badge">Alcance: ${fmt(p.reach || 0)}</span>
+            <span class="badge green">Salvos: ${fmt(p.saved || 0)}</span>
+            <span class="badge blue">Shares: ${fmt(p.shares || 0)}</span>
+            <span class="badge">Comentários: ${fmt(p.comments_count || 0)}</span>
+          </div>
+          <div class="postTitle">${metaEsc(p.caption || "Publicação sem legenda")}</div>
+          ${p.permalink ? `<a href="${p.permalink}" target="_blank">Abrir post</a>` : ""}
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+async function metaLoadInsights(id){
+  try{
+    show("Buscando insights reais da conta conectada...", "success");
+
+    const data = await metaApi(`/api/meta-connected/accounts/${id}/insights?limit=25`);
+
+    const box = document.getElementById("metaInsightsBox");
+
+    if(box){
+      box.innerHTML = metaReportHtml(data.report || {});
+    }
+
+    show("Relatório com insights do cliente gerado.", "success");
+
+  }catch(e){
+    show(e.message);
+  }
+}
+
+function renderConectarMeta(){
+  $("conectarMeta").innerHTML = `
+    <div class="card gold">
+      <div class="between">
+        <div>
+          <div class="eyebrow">Login Facebook do cliente</div>
+          <h2>Conectar Cliente Meta</h2>
+          <p class="muted">
+            Use esta aba para o cliente autorizar a VÉRTICE IA a acessar os insights reais da conta profissional dele.
+          </p>
+        </div>
+        <span class="badge gold">OAuth Meta</span>
+      </div>
+    </div>
+
+    <br>
+
+    <div id="metaConfigBox"></div>
+
+    <br>
+
+    <div class="card">
+      <div class="eyebrow">Gerar login</div>
+      <h2>Solicitar autorização do cliente</h2>
+
+      <label class="muted">Nome do cliente</label>
+      <input id="metaClientName" placeholder="Ex: Espaço TM Pilates" style="width:100%;border-radius:14px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:12px;margin-top:6px;">
+
+      <br><br>
+
+      <div class="alert">
+        O cliente precisa entrar com o Facebook que administra a Página conectada ao Instagram profissional dele.
+      </div>
+
+      <br>
+
+      <div class="row">
+        <button class="btn" onclick="metaGenerateLogin()">Gerar link de login Facebook</button>
+        <button class="btn secondary" onclick="metaListAccounts()">Atualizar contas conectadas</button>
+      </div>
+    </div>
+
+    <br>
+
+    <div id="metaLoginBox"></div>
+
+    <br>
+
+    <div class="card">
+      <div class="between">
+        <div>
+          <div class="eyebrow">Contas autorizadas</div>
+          <h2>Clientes conectados</h2>
+        </div>
+        <button class="btn secondary" onclick="metaListAccounts()">Atualizar</button>
+      </div>
+
+      <br>
+
+      <div id="metaAccountsBox">
+        <div class="empty">Clique em <strong>Atualizar contas conectadas</strong>.</div>
+      </div>
+    </div>
+
+    <br>
+
+    <div id="metaInsightsBox"></div>
+  `;
+
+  setTimeout(() => {
+    metaCheckConfig();
+    metaListAccounts();
+  }, 80);
+}
+
+function renderSobre(){
+  $("sobre").innerHTML = `
+    <div class="card hero gold">
+      <div>
+        <div class="eyebrow">Apresentação</div>
+        <h2 class="heroTitle">A VÉRTICE IA transforma dados em <span>direção estratégica</span>.</h2>
+        <p>Ela foi criada para sair do conteúdo genérico e mostrar, com dados reais, quais publicações atraem atenção, geram valor e merecem próximos movimentos.</p>
+      </div>
+      <div class="row">
+        <button class="btn" onclick="go('metricas')">Ver métricas reais</button>
+        <button class="btn secondary" onclick="go('relatorio')">Ver relatório</button>
+      </div>
+    </div>
+    <br>
+    <div class="grid three">
+      <div class="card"><div class="aboutIcon">1</div><h2>Para quem serve</h2><p>Para pequenos negócios que precisam parar de postar no automático e começar a construir posicionamento com clareza.</p></div>
+      <div class="card"><div class="aboutIcon">2</div><h2>O que analisa</h2><p>Alcance, salvamentos, compartilhamentos, comentários, curtidas, histórico e potencial estratégico dos conteúdos.</p></div>
+      <div class="card"><div class="aboutIcon">3</div><h2>O que entrega</h2><p>Ranking de conteúdo, leitura de crescimento, plano de ação e indicação do que repetir, ajustar ou testar no tráfego.</p></div>
+    </div>
+    <br>
+    <div class="grid two">
+      <div class="card">
+        <div class="eyebrow">Posicionamento</div>
+        <h2>Não é só postar</h2>
+        <p>Post bonito sem direção pode até preencher o feed, mas não necessariamente atrai a pessoa certa. A VÉRTICE olha para os sinais de interesse e ajuda a transformar conteúdo em estratégia.</p>
+      </div>
+      <div class="card">
+        <div class="eyebrow">Promessa correta</div>
+        <h2>Sem promessa falsa</h2>
+        <p>A VÉRTICE IA não promete clientes automaticamente. Ela entrega clareza, consistência, análise de dados e decisões melhores para posicionamento digital.</p>
+      </div>
+    </div>`;
+}
+
+nav();
+go(state.tab);
+loadStatus();
+loadSnapshots(false);
+</script>
+
+
+
+
+</body>
+</html>

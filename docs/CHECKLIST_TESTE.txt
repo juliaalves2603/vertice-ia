@@ -1,0 +1,10 @@
+CHECKLIST - VÉRTICE IA JÚLIA
+
+[ ] Sistema abre em http://127.0.0.1:8000
+[ ] backend/.env preenchido com token novo
+[ ] FACEBOOK_PAGE_ID está correto
+[ ] Configuração > Testar Instagram conectado funciona
+[ ] Métricas Reais > Importar dados reais funciona
+[ ] Snapshot salvo
+[ ] Histórico carrega
+[ ] Relatório comparativo gera depois de 2 snapshots
