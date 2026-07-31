@@ -5726,3 +5726,18 @@ app.include_router(client_router)
 app.include_router(reports_router)
 app.include_router(snapshots_router)
 app.include_router(token_router)
+from fastapi.responses import HTMLResponse
+
+@app.get("/termos", response_class=HTMLResponse)
+def termos():
+    return """
+    <html>
+    <head><title>Termos de Serviço - Vértice IA</title></head>
+    <body>
+        <h1>Termos de Serviço</h1>
+        <p>Ao utilizar a plataforma Vértice IA, você concorda com estes termos de uso.</p>
+        <p>A plataforma coleta e processa dados autorizados pelo usuário por meio das APIs da Meta exclusivamente para fornecer análises, relatórios e funcionalidades contratadas.</p>
+        <p>Os dados não são comercializados e são tratados conforme a Política de Privacidade da plataforma.</p>
+    </body>
+    </html>
+    """
