@@ -6,13 +6,6 @@ from routers.reports import router as reports_router
 from routers.snapshots import router as snapshots_router
 from routers.token import router as token_router
 
-app = FastAPI(title="VÉRTICE IA")
-
-app.include_router(auth_router)
-app.include_router(client_router)
-app.include_router(reports_router)
-app.include_router(snapshots_router)
-app.include_router(token_router)
 
 from datetime import datetime, timedelta
 import urllib.parse
@@ -40,7 +33,19 @@ PAGE_ID = os.getenv('FACEBOOK_PAGE_ID','').strip()
 DB_PATH = Path(os.getenv('VERTICE_DB_PATH', str(BASE_DIR/'vertice_ia_limpa.db')))
 
 app = FastAPI(title='VÉRTICE IA', version='1.0.0')
-app.add_middleware(CORSMiddleware, allow_origins=['*'], allow_credentials=True, allow_methods=['*'], allow_headers=['*'])
+app.add_middleware(
+    CORSMiddleware, 
+    allow_origins=['*'], 
+    allow_credentials=True, 
+    allow_methods=['*'], 
+    allow_headers=['*']
+    )
+
+app.include_router(auth_router)
+app.include_router(client_router)
+app.include_router(reports_router)
+app.include_router(snapshots_router)
+app.include_router(token_router)
 
 def now(): return datetime.now(timezone.utc).isoformat()
 def db():
@@ -425,18 +430,12 @@ def _vertice_logged(request: Request):
 @app.middleware("http")
 async def vertice_visual_login_middleware(request: Request, call_next):
 
-    if request.url.path in [
-        "/api/facebook-login/callback",
-        "/api/facebook-login/config",
-        "/favicon.ico"
-    ]:
-        return await call_next(request)
     if not VERTICE_AUTH_ENABLED:
         return await call_next(request)
 
     path = request.url.path
 
-    if path in [
+    PUBLIC_PATHS = [
         "/login",
         "/api/login",
         "/api/logout",
@@ -444,15 +443,33 @@ async def vertice_visual_login_middleware(request: Request, call_next):
         "/api/session-check",
         "/api/facebook-login/config",
         "/api/facebook-login/callback",
-        "/favicon.ico"
-    ]:
+        "/favicon.ico",
+        "/docs",
+        "/openapi.json",
+        "/redoc",
+        "/termos",
+        "/politica-privacidade",
+        "/exclusao-dados",
+        "/health",
+    ]
+
+    if path in PUBLIC_PATHS:
+        return await call_next(request)
+
+    if path.startswith("/static/"):
+        return await call_next(request)
+
+    if path.startswith("/auth/"):
         return await call_next(request)
 
     if _vertice_logged(request):
         return await call_next(request)
 
     if path.startswith("/api/"):
-        return JSONResponse({"detail": "Acesso não autorizado. Faça login na VÉRTICE IA."}, status_code=401)
+        return JSONResponse(
+            {"detail": "Acesso não autorizado. Faça login na VÉRTICE IA."},
+            status_code=401,
+        )
 
     return RedirectResponse("/login")
 
