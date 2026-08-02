@@ -1,69 +1,61 @@
-from fastapi import FastAPI
+import os
+import re
+import json
+import hmac
+import hashlib
+import secrets
+import sqlite3
+import urllib.parse
+
+from datetime import datetime, timezone, timedelta
+from pathlib import Path
+from typing import Any
+
+import requests
+from dotenv import load_dotenv
+
+from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 
 from routers.auth import router as auth_router
 from routers.client_discovery import router as client_router
 from routers.reports import router as reports_router
 from routers.snapshots import router as snapshots_router
 from routers.token import router as token_router
+from routers.session import router as session_router
 
-app = FastAPI(title="VÉRTICE IA")
+
+load_dotenv()
+BASE_DIR = Path(__file__).resolve().parent
+STATIC_DIR = BASE_DIR / 'static'
+from config import (
+    META_API_VERSION,
+    TOKEN,
+    PAGE_ID,
+    DB_PATH,
+    VERTICE_SESSION_SECRET,
+)
+app = FastAPI(title='VÉRTICE IA', version='1.0.0')
+app.add_middleware(
+    CORSMiddleware, 
+    allow_origins=['*'], 
+    allow_credentials=True, 
+    allow_methods=['*'], 
+    allow_headers=['*']
+    )
 
 app.include_router(auth_router)
 app.include_router(client_router)
 app.include_router(reports_router)
 app.include_router(snapshots_router)
 app.include_router(token_router)
-
-from datetime import datetime, timedelta
-import urllib.parse
-import secrets
-import json
-import sqlite3
-
-import os, json, sqlite3, re, hmac, hashlib
-from datetime import datetime, timezone, timedelta
-from pathlib import Path
-from typing import Any
-import requests
-from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Query, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
-from fastapi.staticfiles import StaticFiles
-
-load_dotenv()
-BASE_DIR = Path(__file__).resolve().parent
-STATIC_DIR = BASE_DIR / 'static'
-META_API_VERSION = os.getenv('META_API_VERSION','v25.0').strip()
-TOKEN = os.getenv('FACEBOOK_ACCESS_TOKEN','').strip()
-PAGE_ID = os.getenv('FACEBOOK_PAGE_ID','').strip()
-DB_PATH = Path(os.getenv('VERTICE_DB_PATH', str(BASE_DIR/'vertice_ia_limpa.db')))
-
-app = FastAPI(title='VÉRTICE IA', version='1.0.0')
-app.add_middleware(CORSMiddleware, allow_origins=['*'], allow_credentials=True, allow_methods=['*'], allow_headers=['*'])
+app.include_router(session_router)
 
 def now(): return datetime.now(timezone.utc).isoformat()
-def db():
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    c=sqlite3.connect(DB_PATH); c.row_factory=sqlite3.Row; return c
+from database import db, init_db
 
-def init_db():
-    with db() as c:
-        c.execute('''CREATE TABLE IF NOT EXISTS snapshots (
-            id INTEGER PRIMARY KEY AUTOINCREMENT, created_at TEXT NOT NULL, source TEXT,
-            facebook_page_id TEXT, facebook_page_name TEXT, instagram_account_id TEXT, instagram_username TEXT,
-            total_posts INTEGER DEFAULT 0, alcance_total INTEGER DEFAULT 0, salvos_total INTEGER DEFAULT 0,
-            shares_total INTEGER DEFAULT 0, comentarios_total INTEGER DEFAULT 0, curtidas_total INTEGER DEFAULT 0,
-            raw_summary TEXT)''')
-        c.execute('''CREATE TABLE IF NOT EXISTS snapshot_posts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT, snapshot_id INTEGER NOT NULL, post_id TEXT NOT NULL,
-            caption TEXT, media_type TEXT, media_product_type TEXT, permalink TEXT, timestamp TEXT,
-            like_count INTEGER DEFAULT 0, comments_count INTEGER DEFAULT 0, reach INTEGER DEFAULT 0,
-            saved INTEGER DEFAULT 0, shares INTEGER DEFAULT 0, engagement_rate REAL DEFAULT 0,
-            potential_score REAL DEFAULT 0, raw_post TEXT)''')
-        c.execute('CREATE INDEX IF NOT EXISTS idx_snapshots_created ON snapshots(created_at)')
-        c.execute('CREATE INDEX IF NOT EXISTS idx_posts_snapshot ON snapshot_posts(snapshot_id)')
-        c.commit()
 @app.on_event('startup')
 def startup(): init_db()
 
@@ -409,12 +401,12 @@ VERTICE_META_BASE_URL_FINAL = "https://appverticeia.com.br"
 VERTICE_AUTH_ENABLED = os.getenv("VERTICE_AUTH_ENABLED", "true").lower() == "true"
 VERTICE_USER = os.getenv("VERTICE_USER", "vertice").strip()
 VERTICE_PASSWORD = os.getenv("VERTICE_PASSWORD", "262817").strip()
-VERTICE_SESSION_SECRET = os.getenv("VERTICE_SESSION_SECRET", VERTICE_PASSWORD + "_VERTICE_IA").strip()
+from config import VERTICE_SESSION_SECRET
 
 def _vertice_token():
     return hmac.new(
         VERTICE_SESSION_SECRET.encode("utf-8"),
-        b"VERTICE_IA_SESSION",
+        "VERTICE_IA_SESSION".encode("utf-8"),
         hashlib.sha256
     ).hexdigest()
 
@@ -425,18 +417,12 @@ def _vertice_logged(request: Request):
 @app.middleware("http")
 async def vertice_visual_login_middleware(request: Request, call_next):
 
-    if request.url.path in [
-        "/api/facebook-login/callback",
-        "/api/facebook-login/config",
-        "/favicon.ico"
-    ]:
-        return await call_next(request)
     if not VERTICE_AUTH_ENABLED:
         return await call_next(request)
 
     path = request.url.path
 
-    if path in [
+    PUBLIC_PATHS = [
         "/login",
         "/api/login",
         "/api/logout",
@@ -444,15 +430,33 @@ async def vertice_visual_login_middleware(request: Request, call_next):
         "/api/session-check",
         "/api/facebook-login/config",
         "/api/facebook-login/callback",
-        "/favicon.ico"
-    ]:
+        "/favicon.ico",
+        "/docs",
+        "/openapi.json",
+        "/redoc",
+        "/termos",
+        "/politica-privacidade",
+        "/exclusao-dados",
+        "/health",
+    ]
+
+    if path in PUBLIC_PATHS:
+        return await call_next(request)
+
+    if path.startswith("/static/"):
+        return await call_next(request)
+
+    if path.startswith("/auth/"):
         return await call_next(request)
 
     if _vertice_logged(request):
         return await call_next(request)
 
     if path.startswith("/api/"):
-        return JSONResponse({"detail": "Acesso não autorizado. Faça login na VÉRTICE IA."}, status_code=401)
+        return JSONResponse(
+            {"detail": "Acesso não autorizado. Faça login na VÉRTICE IA."},
+            status_code=401,
+        )
 
     return RedirectResponse("/login")
 
