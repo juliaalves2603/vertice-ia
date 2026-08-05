@@ -1,5 +1,22 @@
-import os
-import re
+from fastapi import FastAPI
+
+from routers.auth import router as auth_router
+from routers.client_discovery import router as client_router
+from routers.reports import router as reports_router
+from routers.snapshots import router as snapshots_router
+from routers.token import router as token_router
+
+app = FastAPI(title="VÉRTICE IA")
+
+app.include_router(auth_router)
+app.include_router(client_router)
+app.include_router(reports_router)
+app.include_router(snapshots_router)
+app.include_router(token_router)
+
+from datetime import datetime, timedelta
+import urllib.parse
+import secrets
 import json
 import hmac
 import hashlib
@@ -38,20 +55,7 @@ from config import (
     VERTICE_SESSION_SECRET,
 )
 app = FastAPI(title='VÉRTICE IA', version='1.0.0')
-app.add_middleware(
-    CORSMiddleware, 
-    allow_origins=['*'], 
-    allow_credentials=True, 
-    allow_methods=['*'], 
-    allow_headers=['*']
-    )
-
-app.include_router(auth_router)
-app.include_router(client_router)
-app.include_router(reports_router)
-app.include_router(snapshots_router)
-app.include_router(token_router)
-app.include_router(session_router)
+app.add_middleware(CORSMiddleware, allow_origins=['*'], allow_credentials=True, allow_methods=['*'], allow_headers=['*'])
 
 def now(): return datetime.now(timezone.utc).isoformat()
 from database import db, init_db
