@@ -279,6 +279,122 @@
       color:#f8fafc;
       font-weight:850;
     }
+    /* ============================================================
+   ANÁLISE ESTRATÉGICA DO POST
+   ============================================================ */
+
+.strategic-post{
+  transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;
+}
+
+.strategic-post:hover{
+  transform:translateY(-2px);
+  border-color:rgba(251,191,36,.28);
+  box-shadow:0 12px 30px rgba(0,0,0,.18);
+}
+
+.strategy-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  margin-top:14px;
+}
+
+.strategy-box{
+  border:1px solid rgba(148,163,184,.12);
+  background:rgba(2,6,23,.38);
+  border-radius:14px;
+  padding:11px;
+  text-align:center;
+}
+
+.strategy-label{
+  color:var(--muted2);
+  font-size:9px;
+  text-transform:uppercase;
+  font-weight:900;
+  letter-spacing:.1em;
+}
+
+.strategy-box strong{
+  display:block;
+  margin-top:5px;
+  font-size:15px;
+  color:#f8fafc;
+}
+
+.strategy-analysis{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-top:12px;
+}
+
+.strategy-section{
+  border:1px solid rgba(148,163,184,.13);
+  background:rgba(8,17,31,.48);
+  border-radius:16px;
+  padding:14px;
+}
+
+.strategy-section p{
+  margin:7px 0 0;
+  color:#cbd5e1;
+  font-size:12px;
+  line-height:1.55;
+}
+
+.strategy-kicker{
+  display:block;
+  color:var(--gold);
+  font-size:9px;
+  font-weight:950;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+
+.strategy-section strong{
+  color:#f8fafc;
+}
+
+.strategy-section.recommendation{
+  border-color:rgba(251,191,36,.22);
+  background:linear-gradient(
+    135deg,
+    rgba(251,191,36,.08),
+    rgba(8,17,31,.55)
+  );
+}
+
+.strategic-actions{
+  margin-top:14px;
+}
+
+.strategic-actions a{
+  color:var(--gold);
+  font-weight:800;
+  text-decoration:none;
+}
+
+.strategic-actions a:hover{
+  text-decoration:underline;
+}
+
+@media (max-width:900px){
+  .strategy-analysis{
+    grid-template-columns:1fr;
+  }
+
+  .strategy-grid{
+    grid-template-columns:repeat(3,1fr);
+  }
+}
+
+@media (max-width:600px){
+  .strategy-grid{
+    grid-template-columns:1fr;
+  }
+}
     .metricLine{
       display:grid;
       grid-template-columns:repeat(5,1fr);
@@ -450,7 +566,7 @@
 </div>
 
 <script>
-const tabs = [
+const tabsAdmin = [
   ["inicio","Visão Geral","◆"],
   ["config","Configuração","⚙"],
   ["token","Token Meta","●"],
@@ -464,6 +580,20 @@ const tabs = [
   ["conectarMeta","Conectar Cliente Meta","◇"],
   ["sobre","Sobre a VÉRTICE","✦"]
 ];
+
+const tabsClient = [
+  ["inicio","Dashboard","◆"],
+  ["estrategico","Análise Estratégica","◈"],
+  ["historico","Evolução","▣"],
+  ["metricas","Conteúdos","↗"],
+  ["perfilCliente","Minha Conta","◐"]
+];
+
+let currentUser = null;
+
+function getTabs(){
+  return currentUser?.role === "client" ? tabsClient : tabsAdmin;
+}
 
 let state = {
   tab: localStorage.getItem("vertice_julia_visual_tab") || "inicio",
@@ -498,7 +628,14 @@ async function api(path, options={}){
 }
 
 function nav(){
-  $("nav").innerHTML = tabs.map(([id,label,icon])=>`
+  const visibleTabs = getTabs();
+
+  if(!visibleTabs.some(t => t[0] === state.tab)){
+    state.tab = "inicio";
+    localStorage.setItem("vertice_julia_visual_tab", "inicio");
+  }
+
+  $("nav").innerHTML = visibleTabs.map(([id,label,icon])=>`
     <button class="${state.tab===id?'active':''}" onclick="go('${id}')">
       <span>${label}</span><span class="icon">${icon}</span>
     </button>
@@ -510,10 +647,31 @@ function go(id){
   localStorage.setItem("vertice_julia_visual_tab", id);
   document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
   $(id).classList.add("active");
-  $("title").textContent = tabs.find(t=>t[0]===id)?.[1] || "VÉRTICE IA";
+  $("title").textContent = getTabs().find(t=>t[0]===id)?.[1] || "VÉRTICE IA";
   nav();
   show("");
   render();
+}
+
+async function loadCurrentUser(){
+  try{
+    const data = await api("/api/session-check");
+    currentUser = data?.user || null;
+
+    if(currentUser?.role === "client"){
+      const allowed = tabsClient.map(t => t[0]);
+
+      if(!allowed.includes(state.tab)){
+        state.tab = "inicio";
+        localStorage.setItem("vertice_julia_visual_tab", "inicio");
+      }
+    }
+
+    nav();
+  }catch(e){
+    currentUser = null;
+    nav();
+  }
 }
 
 async function loadStatus(){
@@ -560,7 +718,71 @@ function render(){
   if(state.tab==="sobre") renderSobre();
 }
 
+function renderInicioCliente(){
+  const d = kpis();
+  const latest = state.snapshots[0];
+  const accountName = state.account?.instagram_account?.username || currentUser?.username || "sua conta";
+
+  $("inicio").innerHTML = `
+    <div class="card hero gold">
+      <div>
+        <div class="eyebrow">Seu painel</div>
+        <h2 class="heroTitle">Dados reais para orientar o próximo movimento da <span>${safe(accountName)}</span>.</h2>
+        <p>A VÉRTICE IA analisa o desempenho do seu Instagram e transforma seus dados em decisões estratégicas.</p>
+      </div>
+      <div class="row">
+        <button class="btn secondary" onclick="go('estrategico')">Ver análise estratégica</button>
+        <button class="btn ghost" onclick="go('historico')">Ver evolução</button>
+      </div>
+    </div>
+    <br>
+    <div class="grid four">
+      <div class="stat gold"><small>Posts analisados</small><strong>${fmt(state.posts.length)}</strong><div class="hint">Conteúdos avaliados</div></div>
+      <div class="stat"><small>Alcance</small><strong>${fmt(d.reach)}</strong><div class="hint">Visibilidade</div></div>
+      <div class="stat"><small>Salvamentos</small><strong>${fmt(d.saved)}</strong><div class="hint">Valor percebido</div></div>
+      <div class="stat"><small>Compartilhamentos</small><strong>${fmt(d.shares)}</strong><div class="hint">Identificação</div></div>
+    </div>
+    <br>
+    <div class="grid mainSplit">
+      <div class="card">
+        <div class="between">
+          <div>
+            <div class="eyebrow">Leitura estratégica</div>
+            <h2>Conteúdo de maior potencial</h2>
+          </div>
+          <span class="badge gold">Dados reais</span>
+        </div>
+        <div class="item top">
+          <h3>${d.best ? safe(short(d.best.caption, 210)) : "Ainda não há conteúdo suficiente para análise."}</h3>
+          ${d.best ? `<div class="row"><span class="badge gold">Potencial ${d.best.potential_score}/100</span><span class="badge">Alcance ${fmt(d.best.reach)}</span><span class="badge green">Salvos ${fmt(d.best.saved)}</span></div>` : `<p class="muted">A VÉRTICE identificará os conteúdos com maior potencial assim que houver dados disponíveis.</p>`}
+        </div>
+        <div class="grid three">
+          <div class="item"><span class="badge blue">Repetir</span><p>Conteúdos com bons sinais podem inspirar novas versões.</p></div>
+          <div class="item"><span class="badge gold">Testar</span><p>Conteúdos com potencial podem ser avaliados para tráfego.</p></div>
+          <div class="item"><span class="badge red">Ajustar</span><p>Conteúdos fracos precisam de novos ganchos e CTAs.</p></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="eyebrow">Última evolução</div>
+        <h2>${latest ? `Snapshot #${latest.id}` : "Linha de base"}</h2>
+        <p class="muted">${latest ? new Date(latest.created_at).toLocaleString("pt-BR") : "Ainda não existe um snapshot salvo."}</p>
+        <div class="item">
+          <div class="between"><span>Alcance</span><strong>${fmt(latest?.alcance_total || d.reach)}</strong></div>
+          <div class="between"><span>Salvamentos</span><strong>${fmt(latest?.salvos_total || d.saved)}</strong></div>
+          <div class="between"><span>Compartilhamentos</span><strong>${fmt(latest?.shares_total || d.shares)}</strong></div>
+        </div>
+        <button class="btn secondary" onclick="go('historico')">Acompanhar evolução</button>
+      </div>
+    </div>
+  `;
+}
+
 function renderInicio(){
+  if(currentUser?.role === "client"){
+    renderInicioCliente();
+    return;
+  }
+
   const d = kpis();
   const latest = state.snapshots[0];
   $("inicio").innerHTML = `
@@ -662,7 +884,8 @@ async function testStatus(){
   try{
     const data = await api("/api/status");
     $("configResult").textContent = JSON.stringify(data, null, 2);
-    await loadStatus();
+    await loadCurrentUser();
+loadStatus();
     show("Status validado com sucesso.", "success");
   }catch(e){ $("configResult").textContent=e.message; show(e.message); }
 }
@@ -901,7 +1124,178 @@ function clearNewMetaToken(){
   show("Campo limpo.", "success");
 }
 
+function renderMetricasCliente(){
+  const sorted = [...state.posts].sort((a,b)=>(b.potential_score||0)-(a.potential_score||0));
+  const d = kpis();
+  const accountName = state.account?.instagram_account?.username || currentUser?.username || "sua conta";
+
+  $("metricas").innerHTML = `
+    <div class="card gold">
+      <div class="between">
+        <div>
+          <div class="eyebrow">Conteúdos</div>
+          <h2>Desempenho dos seus conteúdos</h2>
+          <p class="muted">A VÉRTICE IA analisa os dados reais do seu Instagram para mostrar quais conteúdos têm maior potencial estratégico.</p>
+          <div class="row">
+            <span class="badge gold">@${safe(accountName)}</span>
+            <span class="badge">Dados reais</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <br>
+
+    <div class="grid four">
+      <div class="stat gold">
+        <small>Posts</small>
+        <strong>${fmt(state.posts.length)}</strong>
+        <div class="hint">Publicações analisadas</div>
+      </div>
+
+      <div class="stat">
+        <small>Alcance</small>
+        <strong>${fmt(d.reach)}</strong>
+        <div class="hint">Visibilidade total</div>
+      </div>
+
+      <div class="stat">
+        <small>Salvos</small>
+        <strong>${fmt(d.saved)}</strong>
+        <div class="hint">Valor percebido</div>
+      </div>
+
+      <div class="stat">
+        <small>Compart.</small>
+        <strong>${fmt(d.shares)}</strong>
+        <div class="hint">Identificação do público</div>
+      </div>
+    </div>
+
+    <br>
+
+    <div class="grid mainSplit">
+      <div class="card">
+        <div class="between">
+          <div>
+            <div class="eyebrow">Publicações</div>
+            <h2>Ranking de potencial</h2>
+          </div>
+          <span class="badge gold">
+            ${state.posts.length ? "Análise atualizada" : "Aguardando dados"}
+          </span>
+        </div>
+
+        <br>
+
+        ${sorted.length ? sorted.map((p,i)=>{
+          const a = postAction(p);
+
+          return `
+            <div class="item ${i===0?'top':''}">
+              <div class="between">
+                <div>
+                  <div class="row">
+                    <span class="badge ${i===0?'gold':''}">#${i+1}</span>
+                    <span class="badge">${safe(p.media_type)}</span>
+                    <span class="badge ${a.cls}">${a.label}</span>
+                  </div>
+
+                  <div class="postTitle">${safe(short(p.caption, 210))}</div>
+
+                  <p class="muted">${safe(p.timestamp||"")}</p>
+
+                  ${p.permalink ? `<a href="${p.permalink}" target="_blank">Abrir publicação original</a>` : ""}
+                </div>
+
+                <div style="min-width:280px">
+                  <div class="between">
+                    <span>Potencial estratégico</span>
+                    <strong>${p.potential_score||0}/100</strong>
+                  </div>
+
+                  <div class="progress">
+                    <span style="width:${Math.min(100, Number(p.potential_score||0))}%"></span>
+                  </div>
+
+                  <p class="muted">${a.text}</p>
+                </div>
+              </div>
+
+              <div class="metricLine">
+                <div class="miniMetric">
+                  <small>Alcance</small>
+                  <strong>${fmt(p.reach)}</strong>
+                </div>
+
+                <div class="miniMetric">
+                  <small>Salvos</small>
+                  <strong>${fmt(p.saved)}</strong>
+                </div>
+
+                <div class="miniMetric">
+                  <small>Compart.</small>
+                  <strong>${fmt(p.shares)}</strong>
+                </div>
+
+                <div class="miniMetric">
+                  <small>Curtidas</small>
+                  <strong>${fmt(p.like_count)}</strong>
+                </div>
+
+                <div class="miniMetric">
+                  <small>Coment.</small>
+                  <strong>${fmt(p.comments_count)}</strong>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join("") : `
+          <div class="empty">
+            Ainda não existem publicações suficientes para gerar o ranking.
+          </div>
+        `}
+      </div>
+
+      <div class="card">
+        <div class="eyebrow">Decisão rápida</div>
+        <h2>Resumo estratégico</h2>
+
+        ${d.best ? `
+          <div class="reportBlock">
+            <h3>Melhor conteúdo</h3>
+            <p>${safe(short(d.best.caption, 180))}</p>
+            <span class="badge gold">
+              Potencial ${d.best.potential_score}/100
+            </span>
+          </div>
+
+          <div class="reportBlock">
+            <h3>Próximo movimento</h3>
+            <ul>
+              <li>Repetir o tema com um novo gancho.</li>
+              <li>Transformar o assunto em Stories com CTA.</li>
+              <li>Avaliar tráfego quando houver potencial estratégico.</li>
+              <li>Observar salvamentos e compartilhamentos para identificar valor percebido.</li>
+            </ul>
+          </div>
+        ` : `
+          <div class="empty">
+            A leitura estratégica aparecerá quando houver dados suficientes.
+          </div>
+        `}
+      </div>
+    </div>
+  `;
+}
+
+
 function renderMetricas(){
+  if(currentUser?.role === "client"){
+    renderMetricasCliente();
+    return;
+  }
+
   const sorted = [...state.posts].sort((a,b)=>(b.potential_score||0)-(a.potential_score||0));
   const d = kpis();
   $("metricas").innerHTML = `
@@ -1007,7 +1401,292 @@ async function saveSnapshot(){
   }catch(e){ show(e.message); }
 }
 
+function renderHistoricoCliente(){
+  const latest = state.snapshots[0];
+  const previous = state.snapshots[1];
+
+  const accountName =
+    state.account?.instagram_account?.username ||
+    currentUser?.username ||
+    "sua conta";
+
+  const variation = (current, old) => {
+    const a = Number(current || 0);
+    const b = Number(old || 0);
+
+    if(!b) return null;
+
+    return ((a - b) / b) * 100;
+  };
+
+  const formatVariation = (value) => {
+    if(value === null || value === undefined) return "—";
+
+    const n = Number(value || 0);
+
+    return `${n > 0 ? "+" : ""}${n.toFixed(1)}%`;
+  };
+
+  const variationClass = (value) => {
+    if(value === null || value === undefined) return "";
+
+    return Number(value) >= 0 ? "green" : "red";
+  };
+
+  const reachVariation = variation(
+    latest?.alcance_total,
+    previous?.alcance_total
+  );
+
+  const savedVariation = variation(
+    latest?.salvos_total,
+    previous?.salvos_total
+  );
+
+  const sharesVariation = variation(
+    latest?.shares_total,
+    previous?.shares_total
+  );
+
+  const commentsVariation = variation(
+    latest?.comentarios_total,
+    previous?.comentarios_total
+  );
+
+  $("historico").innerHTML = `
+    <div class="card gold">
+      <div class="between">
+        <div>
+          <div class="eyebrow">Evolução</div>
+          <h2>Acompanhe o crescimento do seu Instagram</h2>
+          <p class="muted">
+            A VÉRTICE IA compara os dados registrados da sua conta para mostrar
+            como seu desempenho está evoluindo ao longo do tempo.
+          </p>
+
+          <div class="row">
+            <span class="badge gold">@${safe(accountName)}</span>
+            <span class="badge">Dados da sua conta</span>
+          </div>
+        </div>
+
+        <div class="row">
+          <button class="btn" onclick="loadSnapshots(true)">
+            Atualizar evolução
+          </button>
+
+          <button class="btn secondary" onclick="go('estrategico')">
+            Ver análise estratégica
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <br>
+
+    ${
+      !latest
+      ? `
+        <div class="card">
+          <div class="empty">
+            <h3>A evolução ainda está sendo construída</h3>
+            <p>
+              Assim que houver registros de análise da sua conta,
+              a VÉRTICE IA apresentará sua evolução aqui.
+            </p>
+          </div>
+        </div>
+      `
+      : `
+        <div class="grid four">
+
+          <div class="stat gold">
+            <small>Alcance atual</small>
+            <strong>${fmt(latest.alcance_total)}</strong>
+            ${
+              reachVariation !== null
+              ? `<div class="hint ${variationClass(reachVariation)}">${formatVariation(reachVariation)} desde o último registro</div>`
+              : `<div class="hint">Primeiro registro</div>`
+            }
+          </div>
+
+          <div class="stat">
+            <small>Salvamentos</small>
+            <strong>${fmt(latest.salvos_total)}</strong>
+            ${
+              savedVariation !== null
+              ? `<div class="hint ${variationClass(savedVariation)}">${formatVariation(savedVariation)} desde o último registro</div>`
+              : `<div class="hint">Primeiro registro</div>`
+            }
+          </div>
+
+          <div class="stat">
+            <small>Compartilhamentos</small>
+            <strong>${fmt(latest.shares_total)}</strong>
+            ${
+              sharesVariation !== null
+              ? `<div class="hint ${variationClass(sharesVariation)}">${formatVariation(sharesVariation)} desde o último registro</div>`
+              : `<div class="hint">Primeiro registro</div>`
+            }
+          </div>
+
+          <div class="stat">
+            <small>Comentários</small>
+            <strong>${fmt(latest.comentarios_total)}</strong>
+            ${
+              commentsVariation !== null
+              ? `<div class="hint ${variationClass(commentsVariation)}">${formatVariation(commentsVariation)} desde o último registro</div>`
+              : `<div class="hint">Primeiro registro</div>`
+            }
+          </div>
+
+        </div>
+
+        <br>
+
+        <div class="grid two">
+
+          <div class="card">
+            <div class="eyebrow">Última análise</div>
+            <h2>Seu momento atual</h2>
+
+            <div class="item">
+              <div class="between">
+                <span>Data da análise</span>
+                <strong>${new Date(latest.created_at).toLocaleString("pt-BR")}</strong>
+              </div>
+            </div>
+
+            <div class="item">
+              <div class="between">
+                <span>Posts analisados</span>
+                <strong>${fmt(latest.total_posts)}</strong>
+              </div>
+            </div>
+
+            <div class="item">
+              <div class="between">
+                <span>Alcance</span>
+                <strong>${fmt(latest.alcance_total)}</strong>
+              </div>
+            </div>
+
+            <div class="item">
+              <div class="between">
+                <span>Salvamentos</span>
+                <strong>${fmt(latest.salvos_total)}</strong>
+              </div>
+            </div>
+
+            <div class="item">
+              <div class="between">
+                <span>Compartilhamentos</span>
+                <strong>${fmt(latest.shares_total)}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="eyebrow">Comparação</div>
+            <h2>Último período</h2>
+
+            ${
+              previous
+              ? `
+                <p class="muted">
+                  Comparação entre o registro atual e o anterior.
+                </p>
+
+                <div class="item">
+                  <div class="between">
+                    <span>Alcance</span>
+                    <strong>${formatVariation(reachVariation)}</strong>
+                  </div>
+                </div>
+
+                <div class="item">
+                  <div class="between">
+                    <span>Salvamentos</span>
+                    <strong>${formatVariation(savedVariation)}</strong>
+                  </div>
+                </div>
+
+                <div class="item">
+                  <div class="between">
+                    <span>Compartilhamentos</span>
+                    <strong>${formatVariation(sharesVariation)}</strong>
+                  </div>
+                </div>
+
+                <div class="item">
+                  <div class="between">
+                    <span>Comentários</span>
+                    <strong>${formatVariation(commentsVariation)}</strong>
+                  </div>
+                </div>
+              `
+              : `
+                <div class="empty">
+                  Este é o primeiro registro da sua conta.
+                  A comparação de evolução aparecerá após uma nova análise.
+                </div>
+              `
+            }
+          </div>
+
+        </div>
+
+        <br>
+
+        <div class="card">
+          <div class="eyebrow">Histórico</div>
+          <h2>Registros da sua conta</h2>
+
+          <p class="muted">
+            Cada registro representa um momento diferente da análise do seu Instagram.
+          </p>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Posts</th>
+                <th>Alcance</th>
+                <th>Salvos</th>
+                <th>Compart.</th>
+                <th>Comentários</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              ${state.snapshots.map((s,i)=>`
+                <tr>
+                  <td>
+                    ${new Date(s.created_at).toLocaleString("pt-BR")}
+                    ${i === 0 ? `<span class="badge gold">Atual</span>` : ""}
+                  </td>
+                  <td>${fmt(s.total_posts)}</td>
+                  <td>${fmt(s.alcance_total)}</td>
+                  <td>${fmt(s.salvos_total)}</td>
+                  <td>${fmt(s.shares_total)}</td>
+                  <td>${fmt(s.comentarios_total)}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+      `
+    }
+  `;
+}
+
+
 function renderHistorico(){
+  if(currentUser?.role === "client"){
+    renderHistoricoCliente();
+    return;
+  }
+
   $("historico").innerHTML = `
     <div class="card gold">
       <div class="between">
@@ -1077,7 +1756,7 @@ async function loadSnapshots(showMsg=true){
 
 function renderRelatorio(){
   $("relatorio").innerHTML = `
-    <div class="grid mainSplit">
+    <div class="grid mainSplit comparative-report-layout">
       <div class="card gold">
         <div class="between">
           <div>
@@ -1118,62 +1797,189 @@ function visualReport(r){
         <ul>${(r.action_plan||[]).map(x=>`<li>${safe(x)}</li>`).join("")}</ul>
       </div>`;
   }
+
+  const v = r.variation || {};
+  const statusLabels = {
+    crescimento_com_qualidade: "Crescimento com qualidade",
+    alcance_sem_profundidade: "Alcance sem profundidade",
+    qualidade_com_distribuicao_limitada: "Qualidade com distribuição limitada",
+    qualidade_em_evolucao: "Qualidade em evolução",
+    estavel_ou_em_revisao: "Estável / em revisão",
+    linha_de_base: "Linha de base"
+  };
+
+  const statusLabel = statusLabels[r.evolution_status] || "Evolução analisada";
+
+  const pct = (value) => {
+    const n = Number(value || 0);
+    return `${n > 0 ? "+" : ""}${n.toFixed(2)}%`;
+  };
+
+  const points = (value) => {
+    const n = Number(value || 0);
+    return `${n > 0 ? "+" : ""}${n.toFixed(2)} pts`;
+  };
+
+  const gainItems = (r.top_gains||[]).map(p => `
+    <li>
+      <strong>${safe(short(p.caption,110) || "Publicação sem legenda")}</strong>
+      <span class="muted">
+        • potencial ${points(p.delta_potential)}
+        • alcance ${fmt(p.delta_reach)}
+        • salvos ${fmt(p.delta_saved)}
+        • shares ${fmt(p.delta_shares)}
+      </span>
+    </li>
+  `).join("");
+
+  const lossItems = (r.top_losses||[]).map(p => `
+    <li>
+      <strong>${safe(short(p.caption,110) || "Publicação sem legenda")}</strong>
+      <span class="muted">
+        • potencial ${points(p.delta_potential)}
+        • alcance ${fmt(p.delta_reach)}
+        • salvos ${fmt(p.delta_saved)}
+        • shares ${fmt(p.delta_shares)}
+      </span>
+    </li>
+  `).join("");
+
   return `
-    <div class="grid four">
-      <div class="stat ${r.delta_totals.alcance_total>=0?'gold':''}"><small>Δ Alcance</small><strong>${fmt(r.delta_totals.alcance_total)}</strong></div>
-      <div class="stat"><small>Δ Salvos</small><strong>${fmt(r.delta_totals.salvos_total)}</strong></div>
-      <div class="stat"><small>Δ Shares</small><strong>${fmt(r.delta_totals.shares_total)}</strong></div>
-      <div class="stat"><small>Δ Coment.</small><strong>${fmt(r.delta_totals.comentarios_total)}</strong></div>
+    <div class="grid four comparative-metrics">
+      <div class="stat ${Number(v.alcance_pct||0)>=0?'gold':''}">
+        <small>Alcance</small>
+        <strong>${pct(v.alcance_pct)}</strong>
+      </div>
+
+      <div class="stat ${Number(v.salvos_pct||0)>=0?'gold':''}">
+        <small>Salvamentos</small>
+        <strong>${pct(v.salvos_pct)}</strong>
+      </div>
+
+      <div class="stat ${Number(v.shares_pct||0)>=0?'gold':''}">
+        <small>Compartilhamentos</small>
+        <strong>${pct(v.shares_pct)}</strong>
+      </div>
+
+      <div class="stat ${Number(v.comentarios_pct||0)>=0?'gold':''}">
+        <small>Comentários</small>
+        <strong>${pct(v.comentarios_pct)}</strong>
+      </div>
     </div>
-    <div class="reportBlock">
-      <h3>Resumo executivo</h3>
-      <p>${safe(r.message)}</p>
+
+    <div class="reportBlock gold">
+      <div class="eyebrow">Leitura Vértice</div>
+      <h3>${safe(statusLabel)}</h3>
+      <p>${safe(r.strategic_reading || r.message || "")}</p>
     </div>
+
     <div class="grid two">
       <div class="reportBlock">
-        <h3>O que cresceu</h3>
-        <ul>${(r.top_gains||[]).length ? r.top_gains.map(p=>`<li>${safe(short(p.caption,110))} • alcance ${fmt(p.delta_reach)} • salvos ${fmt(p.delta_saved)}</li>`).join("") : "<li>Sem posts comparáveis ainda.</li>"}</ul>
+        <div class="eyebrow">Qualidade da conta</div>
+        <h3>Indicadores estratégicos</h3>
+        <ul>
+          <li>Potencial médio: <strong>${points(v.potencial_medio_delta)}</strong></li>
+          <li>Engajamento médio: <strong>${points(v.engajamento_medio_delta)}</strong></li>
+          <li>Posts comparáveis: <strong>${fmt(r.matched_posts || 0)}</strong></li>
+          <li>Período analisado: <strong>${fmt(r.period_days || 0)} dias</strong></li>
+        </ul>
       </div>
+
       <div class="reportBlock">
-        <h3>O que caiu ou precisa ajuste</h3>
-        <ul>${(r.top_losses||[]).length ? r.top_losses.map(p=>`<li>${safe(short(p.caption,110))} • alcance ${fmt(p.delta_reach)} • salvos ${fmt(p.delta_saved)}</li>`).join("") : "<li>Sem queda comparável ainda.</li>"}</ul>
+        <div class="eyebrow">Variação absoluta</div>
+        <h3>O que mudou</h3>
+        <ul>
+          <li>Alcance: <strong>${fmt(r.delta_totals.alcance_total)}</strong></li>
+          <li>Salvamentos: <strong>${fmt(r.delta_totals.salvos_total)}</strong></li>
+          <li>Compartilhamentos: <strong>${fmt(r.delta_totals.shares_total)}</strong></li>
+          <li>Comentários: <strong>${fmt(r.delta_totals.comentarios_total)}</strong></li>
+          <li>Curtidas: <strong>${fmt(r.delta_totals.curtidas_total)}</strong></li>
+        </ul>
       </div>
     </div>
+
+    <div class="grid two">
+      <div class="reportBlock">
+        <div class="eyebrow">Conteúdos em evolução</div>
+        <h3>O que ganhou força</h3>
+        <ul>
+          ${gainItems || "<li>Sem posts comparáveis ainda.</li>"}
+        </ul>
+      </div>
+
+      <div class="reportBlock">
+        <div class="eyebrow">Conteúdos para revisão</div>
+        <h3>O que perdeu força</h3>
+        <ul>
+          ${lossItems || "<li>Sem queda comparável ainda.</li>"}
+        </ul>
+      </div>
+    </div>
+
     <div class="reportBlock">
-      <h3>Plano de ação 7 dias</h3>
-      <ul>${(r.action_plan||[]).map(x=>`<li>${safe(x)}</li>`).join("")}</ul>
-    </div>`;
+      <div class="eyebrow">Próximo movimento</div>
+      <h3>Plano de ação Vértice</h3>
+      <ul>
+        ${(r.action_plan||[]).map((x,i)=>`<li><strong>${i+1}.</strong> ${safe(x)}</li>`).join("")}
+      </ul>
+    </div>
+  `;
 }
 
-function formatReport(r){
-  if(!r) return "";
-  if(r.status !== "sucesso"){
-    return `STATUS: ${r.status}
+  function formatReport(r){
+    if(!r) return "";
+
+    if(r.status !== "sucesso"){
+      return `STATUS: ${r.status}\n${r.message || ""}\n\nPlano:\n- ${(r.action_plan||[]).join("\n- ")}`;
+    }
+
+    const v = r.variation || {};
+
+    const statusLabels = {
+      crescimento_com_qualidade: "Crescimento com qualidade",
+      alcance_sem_profundidade: "Alcance sem profundidade",
+      qualidade_com_distribuicao_limitada: "Qualidade com distribuição limitada",
+      qualidade_em_evolucao: "Qualidade em evolução",
+      estavel_ou_em_revisao: "Estável / em revisão",
+      linha_de_base: "Linha de base"
+    };
+
+    const status = statusLabels[r.evolution_status] || "Evolução analisada";
+
+    return `RELATÓRIO COMPARATIVO — VÉRTICE IA
+
 ${r.message || ""}
 
-Plano:
+LEITURA VÉRTICE
+Status: ${status}
+
+${r.strategic_reading || ""}
+
+VARIAÇÃO PERCENTUAL
+Alcance: ${v.alcance_pct || 0}%
+Salvamentos: ${v.salvos_pct || 0}%
+Compartilhamentos: ${v.shares_pct || 0}%
+Comentários: ${v.comentarios_pct || 0}%
+Potencial médio: ${v.potencial_medio_delta || 0} pontos
+Engajamento médio: ${v.engajamento_medio_delta || 0} pontos
+
+VARIAÇÃO ABSOLUTA
+Alcance: ${(r.delta_totals||{}).alcance_total || 0}
+Salvamentos: ${(r.delta_totals||{}).salvos_total || 0}
+Compartilhamentos: ${(r.delta_totals||{}).shares_total || 0}
+Curtidas: ${(r.delta_totals||{}).curtidas_total || 0}
+Comentários: ${(r.delta_totals||{}).comentarios_total || 0}
+
+O QUE GANHOU FORÇA
+${(r.top_gains||[]).map(p=>`- ${(p.caption||"").slice(0,110)} | potencial ${p.delta_potential || 0} | alcance ${p.delta_reach || 0} | salvos ${p.delta_saved || 0} | shares ${p.delta_shares || 0}`).join("\n") || "- Sem posts comparáveis ainda."}
+
+O QUE PERDEU FORÇA
+${(r.top_losses||[]).map(p=>`- ${(p.caption||"").slice(0,110)} | potencial ${p.delta_potential || 0} | alcance ${p.delta_reach || 0} | salvos ${p.delta_saved || 0} | shares ${p.delta_shares || 0}`).join("\n") || "- Sem queda comparável ainda."}
+
+PLANO DE AÇÃO VÉRTICE
 - ${(r.action_plan||[]).join("\n- ")}`;
   }
-  return `RELATÓRIO COMPARATIVO — VÉRTICE IA
 
-${r.message}
-
-Variação total:
-Alcance: ${r.delta_totals.alcance_total}
-Salvos: ${r.delta_totals.salvos_total}
-Compartilhamentos: ${r.delta_totals.shares_total}
-Curtidas: ${r.delta_totals.curtidas_total}
-Comentários: ${r.delta_totals.comentarios_total}
-
-O que cresceu:
-${(r.top_gains||[]).map(p=>`- ${(p.caption||"").slice(0,110)} | alcance ${p.delta_reach} | salvos ${p.delta_saved}`).join("\n") || "- Sem posts comparáveis ainda."}
-
-O que caiu ou precisa ajuste:
-${(r.top_losses||[]).map(p=>`- ${(p.caption||"").slice(0,110)} | alcance ${p.delta_reach} | salvos ${p.delta_saved}`).join("\n") || "- Sem posts comparáveis ainda."}
-
-Plano de ação:
-- ${(r.action_plan||[]).join("\n- ")}`;
-}
 
 async function copyReport(){
   const text = $("reportBox")?.textContent || "";
@@ -1182,7 +1988,90 @@ async function copyReport(){
 }
 
 
+
+function renderEstrategicoCliente(){
+  const accountName = state.account?.instagram_account?.username || currentUser?.username || "sua conta";
+  const d = kpis();
+
+  $("estrategico").innerHTML = `
+    <div class="card gold">
+      <div class="between">
+        <div>
+          <div class="eyebrow">Análise estratégica</div>
+          <h2>Decisão de conteúdo, tráfego e posicionamento</h2>
+          <p class="muted">
+            A VÉRTICE IA utiliza os dados reais da sua conta Instagram conectada para identificar
+            oportunidades, conteúdos de maior potencial e próximos movimentos estratégicos.
+          </p>
+          <div class="row">
+            <span class="badge gold">@${safe(accountName)}</span>
+            <span class="badge green">Dados reais</span>
+          </div>
+        </div>
+
+        <div class="row">
+          <button class="btn" onclick="loadAdvanced()">Gerar análise estratégica</button>
+          <button class="btn secondary" onclick="copyAdvanced()">Copiar análise</button>
+          <button class="btn secondary" onclick="downloadAdvancedHtml()">Baixar relatório</button>
+          <button class="btn ghost" onclick="printAdvancedReport()">Salvar em PDF</button>
+        </div>
+      </div>
+    </div>
+
+    <br>
+
+    <div class="card">
+      <div class="eyebrow">Sua conta</div>
+      <h2>Análise baseada no seu Instagram</h2>
+
+      <p class="muted">
+        Esta análise considera exclusivamente os dados da conta Instagram vinculada ao seu acesso.
+        Não é necessário preencher informações manualmente.
+      </p>
+
+      <div class="grid four">
+        <div class="stat gold">
+          <small>Conta</small>
+          <strong>@${safe(accountName)}</strong>
+        </div>
+
+        <div class="stat">
+          <small>Posts analisados</small>
+          <strong>${fmt(state.posts.length)}</strong>
+        </div>
+
+        <div class="stat">
+          <small>Alcance</small>
+          <strong>${fmt(d.reach)}</strong>
+        </div>
+
+        <div class="stat">
+          <small>Salvamentos</small>
+          <strong>${fmt(d.saved)}</strong>
+        </div>
+      </div>
+    </div>
+
+    <br>
+
+    <div id="advancedContent">
+      ${state.advanced ? advancedHtml(state.advanced) : `
+        <div class="empty">
+          Clique em <strong>Gerar análise estratégica</strong>
+          para analisar os dados reais da sua conta.
+        </div>
+      `}
+    </div>
+  `;
+}
+
+
 function renderEstrategico(){
+  if(currentUser?.role === "client"){
+    renderEstrategicoCliente();
+    return;
+  }
+
   $("estrategico").innerHTML = `
     <div class="card gold">
       <div class="between">
@@ -1674,7 +2563,147 @@ function advancedClientHtmlSimple(){
 
 
 
-</body>
+
+<style id="comparative-metrics-fix">
+  #visualReport .comparative-metrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+  #visualReport .comparative-metrics > .stat {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  #visualReport .comparative-metrics > .stat small {
+    overflow-wrap: anywhere;
+  }
+  #visualReport .comparative-metrics > .stat strong {
+    overflow-wrap: anywhere;
+  }
+  @media (max-width: 900px) {
+    #visualReport .comparative-metrics {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 480px) {
+    #visualReport .comparative-metrics {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>
+
+
+<style id="comparative-report-layout-fix">
+  #relatorio .comparative-report-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+    align-items: start;
+    width: 100%;
+    min-width: 0;
+  }
+  #relatorio .comparative-report-layout > .card {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  #relatorio #visualReport {
+    min-width: 0;
+    width: 100%;
+  }
+  #relatorio #visualReport .comparative-metrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+  }
+  #relatorio #visualReport .comparative-metrics > .stat {
+    min-width: 0;
+    padding: 14px 10px;
+  }
+  #relatorio #visualReport .comparative-metrics > .stat small {
+    overflow-wrap: anywhere;
+  }
+  @media (max-width: 1250px) {
+    #relatorio .comparative-report-layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+  @media (max-width: 700px) {
+    #relatorio #visualReport .comparative-metrics {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+</style>
+\n
+<style id="vertice-layout-width-fix">
+  html, body {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+  }
+
+  .layout {
+    width: 100vw;
+    max-width: 100vw;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  main {
+    width: 100vw;
+    min-width: 0;
+    max-width: none;
+    box-sizing: border-box;
+  }
+
+  .section {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  #relatorio .comparative-report-layout {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    grid-template-columns: minmax(0, 1fr);
+    box-sizing: border-box;
+  }
+
+  #relatorio .comparative-report-layout > .card {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  #relatorio #visualReport {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  #relatorio #visualReport .comparative-metrics {
+    width: 100%;
+    min-width: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    box-sizing: border-box;
+  }
+
+  #relatorio #visualReport .comparative-metrics > .stat {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  #relatorio #visualReport .comparative-metrics > .stat small,
+  #relatorio #visualReport .comparative-metrics > .stat strong {
+    overflow-wrap: anywhere;
+  }
+</style>
+\n</body>
 </html>`;
 }
 
@@ -2327,7 +3356,142 @@ async function buscarPerfilClienteAutomatico(){
   }
 }
 
+function renderMinhaContaCliente(){
+  const account = state.account || {};
+  const instagram = account.instagram_account || {};
+  const facebook = account.facebook_page || {};
+
+  const instagramUsername =
+    instagram.username ||
+    currentUser?.username ||
+    "Não identificado";
+
+  const instagramId =
+    instagram.id ||
+    currentUser?.meta_account_id ||
+    "Não informado";
+
+  const clienteNome =
+    currentUser?.name ||
+    account.client_name ||
+    "Cliente";
+
+  $("perfilCliente").innerHTML = `
+    <div class="card gold">
+      <div class="between">
+        <div>
+          <div class="eyebrow">Minha conta</div>
+          <h2>Dados da sua conta conectada</h2>
+          <p class="muted">
+            Estas informações correspondem exclusivamente à conta vinculada ao seu acesso na VÉRTICE IA.
+          </p>
+        </div>
+        <span class="badge green">Conta conectada</span>
+      </div>
+    </div>
+
+    <br>
+
+    <div class="grid two">
+      <div class="card">
+        <div class="eyebrow">Cliente</div>
+        <h2>Informações de acesso</h2>
+
+        <div class="item">
+          <div class="between">
+            <span>Nome</span>
+            <strong>${safe(clienteNome)}</strong>
+          </div>
+        </div>
+
+        <div class="item">
+          <div class="between">
+            <span>Usuário</span>
+            <strong>${safe(currentUser?.username || "Não informado")}</strong>
+          </div>
+        </div>
+
+        <div class="item">
+          <div class="between">
+            <span>Perfil</span>
+            <span class="badge">Cliente</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="eyebrow">Instagram conectado</div>
+        <h2>@${safe(instagramUsername)}</h2>
+
+        <div class="item">
+          <div class="between">
+            <span>Status</span>
+            <span class="badge green">Conectado</span>
+          </div>
+        </div>
+
+        <div class="item">
+          <div class="between">
+            <span>Conta Instagram</span>
+            <strong>@${safe(instagramUsername)}</strong>
+          </div>
+        </div>
+
+        <div class="item">
+          <div class="between">
+            <span>ID da conta</span>
+            <strong>${safe(instagramId)}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <br>
+
+    <div class="card">
+      <div class="eyebrow">Conta vinculada</div>
+      <h2>Instagram utilizado pela VÉRTICE IA</h2>
+
+      <div class="grid two">
+        <div class="item">
+          <small class="muted">Instagram</small>
+          <h3>@${safe(instagramUsername)}</h3>
+          <p class="muted">
+            Os dados exibidos no Dashboard, Conteúdos, Análise Estratégica e Evolução
+            são referentes a esta conta.
+          </p>
+        </div>
+
+        <div class="item">
+          <small class="muted">Página vinculada</small>
+          <h3>${safe(facebook.name || "Conta profissional do Instagram")}</h3>
+          <p class="muted">
+            Esta informação pertence à conexão atualmente autorizada para o seu acesso.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <br>
+
+    <div class="card gold">
+      <div class="eyebrow">Privacidade</div>
+      <h2>Seu acesso é individual</h2>
+      <p class="muted">
+        Você visualiza somente os dados da conta Instagram vinculada ao seu usuário.
+        Informações de outros clientes não fazem parte deste painel.
+      </p>
+    </div>
+  `;
+}
+
+
 function renderPerfilCliente(){
+  if(currentUser?.role === "client"){
+    renderMinhaContaCliente();
+    return;
+  }
+
   $("perfilCliente").innerHTML = `
     <div class="card gold">
       <div class="between">
@@ -3445,7 +4609,7 @@ async function metaGenerateLogin(){
   const clientName = metaGet("metaClientName");
 
   try{
-    const data = await metaApi(`/api/facebook-login/start?client_name=${encodeURIComponent(clientName)}`);
+    const data = await metaApi(`/api/instagram-login/start?client_name=${encodeURIComponent(clientName)}`);
 
     const box = document.getElementById("metaLoginBox");
 
@@ -3453,7 +4617,7 @@ async function metaGenerateLogin(){
       box.innerHTML = `
         <div class="card gold">
           <div class="eyebrow">Link de autorização</div>
-          <h2>Login Facebook do cliente</h2>
+          <h2>Login Instagram do cliente</h2>
           <p class="muted">Envie este link para o cliente ou abra no navegador para teste.</p>
 
           <input value="${metaEsc(data.login_url)}" readonly style="width:100%;border-radius:14px;border:1px solid rgba(148,163,184,.18);background:#020617;color:white;padding:12px;margin-top:6px;">
@@ -3592,22 +4756,109 @@ function metaReportHtml(report){
 
     <div class="card">
       <div class="eyebrow">Ranking</div>
-      <h2>Posts com maior força estratégica</h2>
-      ${top.map((p, i) => `
-        <div class="item">
-          <div class="row">
-            <span class="badge gold">#${i + 1}</span>
-            <span class="badge">Alcance: ${fmt(p.reach || 0)}</span>
-            <span class="badge green">Salvos: ${fmt(p.saved || 0)}</span>
-            <span class="badge blue">Shares: ${fmt(p.shares || 0)}</span>
-            <span class="badge">Comentários: ${fmt(p.comments_count || 0)}</span>
-          </div>
-          <div class="postTitle">${metaEsc(p.caption || "Publicação sem legenda")}</div>
-          ${p.permalink ? `<a href="${p.permalink}" target="_blank">Abrir post</a>` : ""}
+    <h2>Posts com maior força estratégica</h2>
+
+${top.map((p, i) => {
+  const decisao = p.decisao || {};
+
+  const engagement = Number(p.engagement_rate || 0);
+  const saveRate = Number(p.taxa_salvamento || 0);
+  const shareRate = Number(p.taxa_compartilhamento || 0);
+  const score = Number(p.potential_score || 0);
+
+  const diagnostic =
+    p.diagnostico ||
+    "O conteúdo ainda está em observação enquanto novos dados são coletados.";
+
+  let nextStep =
+    decisao.next_step ||
+    "Criar uma nova variação do conteúdo e acompanhar a resposta antes de escalar.";
+
+  return `
+    <div class="item strategic-post">
+
+      <div class="row">
+        <span class="badge gold">#${i + 1}</span>
+
+        <span class="badge">
+          Alcance: ${fmt(p.reach || 0)}
+        </span>
+
+        <span class="badge green">
+          Salvos: ${fmt(p.saved || 0)}
+        </span>
+
+        <span class="badge blue">
+          Shares: ${fmt(p.shares || 0)}
+        </span>
+
+        <span class="badge">
+          Comentários: ${fmt(p.comments_count || 0)}
+        </span>
+
+        <span class="badge">
+          Potencial: ${fmt(score)}
+        </span>
+      </div>
+
+      <div class="postTitle">
+        ${metaEsc(p.caption || "Publicação sem legenda")}
+      </div>
+
+      <div class="strategy-grid">
+
+        <div class="strategy-box">
+          <div class="strategy-label">ENGAJAMENTO</div>
+          <strong>${engagement.toFixed(2)}%</strong>
         </div>
-      `).join("")}
+
+        <div class="strategy-box">
+          <div class="strategy-label">SALVAMENTO</div>
+          <strong>${saveRate.toFixed(2)}%</strong>
+        </div>
+
+        <div class="strategy-box">
+          <div class="strategy-label">COMPARTILHAMENTO</div>
+          <strong>${shareRate.toFixed(2)}%</strong>
+        </div>
+
+      </div>
+
+      <div class="strategy-analysis">
+
+        <div class="strategy-section">
+          <span class="strategy-kicker">DIAGNÓSTICO VÉRTICE</span>
+          <p>${metaEsc(diagnostic)}</p>
+        </div>
+
+        <div class="strategy-section">
+          <span class="strategy-kicker">DECISÃO</span>
+          <p>
+            <strong>${metaEsc(decisao.badge || "Monitorar")}</strong>
+          </p>
+          <p>${metaEsc(decisao.reason || "")}</p>
+        </div>
+
+        <div class="strategy-section recommendation">
+          <span class="strategy-kicker">PRÓXIMO PASSO</span>
+          <p>${metaEsc(nextStep)}</p>
+        </div>
+
+      </div>
+
+      <div class="row strategic-actions">
+        ${
+          p.permalink
+            ? `<a href="${p.permalink}" target="_blank">Abrir post</a>`
+            : ""
+        }
+      </div>
+
     </div>
   `;
+}).join("")}
+</div>
+`;
 }
 
 async function metaLoadInsights(id){
@@ -3634,7 +4885,7 @@ function renderConectarMeta(){
     <div class="card gold">
       <div class="between">
         <div>
-          <div class="eyebrow">Login Facebook do cliente</div>
+          <div class="eyebrow">Login Instagram do cliente</div>
           <h2>Conectar Cliente Meta</h2>
           <p class="muted">
             Use esta aba para o cliente autorizar a VÉRTICE IA a acessar os insights reais da conta profissional dele.
@@ -3660,13 +4911,13 @@ function renderConectarMeta(){
       <br><br>
 
       <div class="alert">
-        O cliente precisa entrar com o Facebook que administra a Página conectada ao Instagram profissional dele.
+        O cliente deve entrar com a conta profissional do Instagram que deseja conectar à VÉRTICE IA. Não é necessário ter uma Página do Facebook.
       </div>
 
       <br>
 
       <div class="row">
-        <button class="btn" onclick="metaGenerateLogin()">Gerar link de login Facebook</button>
+        <button class="btn" onclick="metaGenerateLogin()">Gerar link de login Instagram</button>
         <button class="btn secondary" onclick="metaListAccounts()">Atualizar contas conectadas</button>
       </div>
     </div>
@@ -3738,10 +4989,26 @@ function renderSobre(){
     </div>`;
 }
 
-nav();
-go(state.tab);
+loadCurrentUser().then(async () => {
+  if(currentUser?.role === "client"){
+    try{
+      const data = await api("/api/posts?limit=50");
+      state.posts = data.data || [];
+      state.account = data;
+    }catch(e){
+      console.error("Falha ao carregar dados do cliente:", e);
+    }
+  }
+
+  go(state.tab);
+  await loadSnapshots(false);
+}).catch(() => {
+  nav();
+  go(state.tab);
+  loadSnapshots(false);
+});
+
 loadStatus();
-loadSnapshots(false);
 </script>
 
 

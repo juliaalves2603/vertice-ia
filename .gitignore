@@ -33,3 +33,12 @@ build/
 backups/
 app_backup_*.py
 backend/app_backup_*.py
+# Backups locais e arquivos de ambiente sensíveis
+backend/.env_backup*
+backend/*.bak
+backend/*.bkp
+backend/*.backup*
+backend/app_backup_*.py
+backend/static/*backup*.html
+backend/static/*.bak*
+.envmama

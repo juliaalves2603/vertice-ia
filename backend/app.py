@@ -1,3 +1,5 @@
+
+
 from fastapi import FastAPI
 
 from routers.auth import router as auth_router
@@ -27,6 +29,8 @@ from typing import Any
 import requests
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query, Request
+
+
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -95,23 +99,46 @@ def resolve_account():
         raise HTTPException(400, detail={'message':'Página encontrada, mas sem instagram_business_account conectado.','facebook_page':{'id':p.get('id'),'name':p.get('name')}})
     return {'facebook_page':{'id':p.get('id'),'name':p.get('name')}, 'instagram_account':ig, 'instagram_account_id':ig['id']}
 
-def insights(mid):
-    res={'reach':0,'saved':0,'shares':0}
-    ok,p=meta_safe(f'{mid}/insights', {'metric':'reach,saved,shares'})
-    if not ok: return res
-    for it in p.get('data',[]):
-        n=it.get('name'); vals=it.get('values') or []; v=vals[0].get('value',0) if vals else 0
-        if n in res:
-            try: res[n]=int(v or 0)
-            except Exception: res[n]=0
+def insights(mid, token=None, instagram_login=False):
+    res = {"reach": 0, "saved": 0, "shares": 0}
+    metrics = "reach,saved,shares,total_interactions,views"
+
+    try:
+        if instagram_login:
+            raw = _instagram_graph_get(
+                f"{mid}/insights", token, {"metric": metrics}
+            )
+            data = _parse_insights_response(raw)
+        elif token:
+            raw = _meta_graph_get(
+                f"{mid}/insights", token, {"metric": metrics}
+            )
+            data = _parse_insights_response(raw)
+        else:
+            ok, raw = meta_safe(
+                f"{mid}/insights", {"metric": "reach,saved,shares"}
+            )
+            if not ok:
+                return res
+            data = _parse_insights_response(raw)
+
+        for key in res:
+            try:
+                res[key] = int(data.get(key) or 0)
+            except (TypeError, ValueError):
+                res[key] = 0
+    except Exception:
+        return res
+
     return res
+
 
 def score(reach,saved,shares,likes,comments):
     if reach<=0: return 0.0
     return round(min(100, (saved/reach)*100*18 + (shares/reach)*100*12 + ((likes+comments+saved+shares)/reach)*100*2.8),2)
 
-def norm_post(p):
-    mid=str(p.get('id') or ''); ins=insights(mid)
+def norm_post(p, token=None, instagram_login=False):
+    mid=str(p.get('id') or ''); ins=insights(mid, token, instagram_login)
     likes=int(p.get('like_count') or 0); comments=int(p.get('comments_count') or 0)
     reach=ins['reach']; saved=ins['saved']; shares=ins['shares']
     eng=round(((likes+comments+saved+shares)/reach)*100,2) if reach else 0
@@ -121,12 +148,84 @@ def norm_post(p):
         'like_count':likes,'comments_count':comments,'reach':reach,'saved':saved,'shares':shares,'engagement_rate':eng,
         'potential_score':score(reach,saved,shares,likes,comments)}
 
-def extract_posts(limit=50):
-    r=resolve_account(); ig_id=r['instagram_account_id']
-    fields='id,caption,media_type,media_product_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count'
-    p=meta_get(f'{ig_id}/media', {'fields':fields,'limit':limit})
-    posts=[norm_post(x) for x in p.get('data',[])]
-    return {'status':'sucesso','source':'meta_graph_api','facebook_page':r['facebook_page'],'instagram_account':r['instagram_account'], 'instagram_account_id':ig_id, 'data':posts, 'paging':p.get('paging',{})}
+def extract_posts(limit=50, account=None):
+    fields = "id,caption,media_type,media_product_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count"
+
+    if account is not None:
+        token = account.get("page_access_token") or account.get("user_access_token")
+        ig_id = account.get("ig_user_id")
+
+        if not token or not ig_id:
+            raise HTTPException(
+                status_code=400,
+                detail="Conta Instagram vinculada não possui credenciais válidas."
+            )
+
+        raw_payload = {}
+        try:
+            with sqlite3.connect(_meta_client_db_path()) as conn:
+                conn.row_factory = sqlite3.Row
+                row = conn.execute(
+                    "SELECT raw_payload FROM meta_connected_accounts WHERE id = ?",
+                    (account.get("id"),)
+                ).fetchone()
+                if row and row["raw_payload"]:
+                    raw_payload = json.loads(row["raw_payload"])
+        except Exception:
+            raw_payload = {}
+
+        is_instagram_login = raw_payload.get("login_type") == "instagram_login"
+
+        if is_instagram_login:
+            media = _instagram_graph_get("me/media", token, {
+                "fields": fields,
+                "limit": limit
+            })
+        else:
+            media = _meta_graph_get(f"{ig_id}/media", token, {
+                "fields": fields,
+                "limit": limit
+            })
+
+        posts = [
+            norm_post(item, token, is_instagram_login)
+            for item in media.get("data", [])
+        ]
+
+        return {
+            "status": "sucesso",
+            "source": "instagram_graph_api" if is_instagram_login else "meta_graph_api",
+            "facebook_page": {
+                "id": account.get("page_id"),
+                "name": account.get("page_name")
+            },
+            "instagram_account": {
+                "id": ig_id,
+                "username": account.get("ig_username")
+            },
+            "instagram_account_id": ig_id,
+            "data": posts,
+            "paging": media.get("paging", {})
+        }
+
+    resolved = resolve_account()
+    ig_id = resolved["instagram_account_id"]
+    media = meta_get(f"{ig_id}/media", {
+        "fields": fields,
+        "limit": limit
+    })
+    posts = [norm_post(item) for item in media.get("data", [])]
+
+    return {
+        "status": "sucesso",
+        "source": "meta_graph_api",
+        "facebook_page": resolved.get("facebook_page"),
+        "instagram_account": resolved.get("instagram_account"),
+        "instagram_account_id": ig_id,
+        "data": posts,
+        "paging": media.get("paging", {})
+    }
+
 
 def pint(p,k):
     try: return int(p.get(k) or 0)
@@ -244,6 +343,106 @@ def _decision_for_post(p, avg_reach):
         'reason': 'Resultado intermediário. Não é descarte, mas ainda não é prioridade.',
         'next_step': 'Aguardar novo snapshot ou criar variação com gancho mais específico.'
     }
+
+
+def _strategic_diagnostic_for_post(p, avg_reach, avg_engagement, avg_share_rate):
+    reach = _n(p.get("reach"))
+    saved = _n(p.get("saved"))
+    shares = _n(p.get("shares"))
+    comments = _n(p.get("comments_count"))
+    likes = _n(p.get("like_count"))
+    engagement = _n(p.get("engagement_rate"))
+    potential = _n(p.get("potential_score"))
+
+    share_rate = _rate(shares, reach)
+    save_rate = _rate(saved, reach)
+
+    reach_ratio = reach / avg_reach if avg_reach > 0 else 0
+    engagement_ratio = engagement / avg_engagement if avg_engagement > 0 else 0
+    share_ratio = share_rate / avg_share_rate if avg_share_rate > 0 else 0
+
+    if saved > 0 and shares > 0 and potential >= 65:
+        return (
+            "Conteúdo com resposta qualitativa forte. Os salvamentos indicam valor percebido "
+            "e os compartilhamentos mostram capacidade de circulação. É um formato com sinais consistentes para ser explorado novamente."
+        )
+
+    if saved > 0 and save_rate >= 1:
+        return (
+            "O principal diferencial deste conteúdo está no valor percebido. A taxa de salvamento "
+            "mostra que a publicação foi considerada útil o suficiente para ser guardada."
+        )
+
+    if share_ratio >= 1.5 and share_rate >= 1.5:
+        return (
+            "Este conteúdo se destaca pela circulação orgânica. A taxa de compartilhamento está "
+            "acima do padrão dos posts analisados, indicando uma mensagem com potencial de distribuição pelo próprio público."
+        )
+
+    if engagement_ratio >= 1.25 and engagement >= 5 and share_rate >= 1:
+        return (
+            "Este conteúdo se destaca pela eficiência de interação. O público respondeu acima da média "
+            "da conta e também houve compartilhamentos, sinalizando boa aderência à mensagem."
+        )
+
+    if engagement_ratio >= 1.25 and engagement >= 5:
+        return (
+            "A principal força deste conteúdo é a eficiência de interação. Mesmo que o alcance não seja o maior, "
+            "a resposta proporcional do público ficou acima da média da conta."
+        )
+
+    if potential >= 65 and shares > 0:
+        return (
+            "O conteúdo apresenta potencial estratégico alto e já demonstrou capacidade de gerar circulação. "
+            "O ponto a desenvolver é transformar esse interesse em sinais mais profundos, como salvamentos e conversas."
+        )
+
+    if reach_ratio >= 1.2 and engagement_ratio < 0.8:
+        return (
+            "O conteúdo recebeu exposição acima da média, mas a resposta proporcional ficou abaixo do padrão da conta. "
+            "O próximo teste deve fortalecer gancho, proposta de valor e chamada para ação."
+        )
+
+    if reach_ratio < 0.8 and engagement_ratio >= 1.2:
+        return (
+            "O alcance ficou abaixo da média, porém quem recebeu o conteúdo respondeu proporcionalmente melhor. "
+            "Isso indica aderência e aponta para uma oportunidade de melhorar a distribuição."
+        )
+
+    if comments > 0 and engagement_ratio >= 1.1:
+        return (
+            "O conteúdo gerou conversa acima do padrão observado. Esse sinal pode ser aproveitado com perguntas, "
+            "opiniões e conteúdos de continuidade para aprofundar relacionamento."
+        )
+
+    if shares > 0:
+        return (
+            "O conteúdo conseguiu gerar compartilhamentos, mas esse sinal ainda não se destaca de forma suficiente "
+            "sobre o padrão da conta. Vale testar uma nova abordagem mantendo o tema central."
+        )
+
+    if reach_ratio >= 1.2:
+        return (
+            "O alcance ficou acima da média da conta, mas ainda não houve sinais fortes de profundidade. "
+            "O próximo teste deve buscar transformar exposição em interação, salvamento ou compartilhamento."
+        )
+
+    if engagement >= 3 and engagement_ratio >= 1:
+        return (
+            "O conteúdo apresentou boa resposta proporcional ao alcance. Vale testar uma nova abordagem sobre o tema "
+            "para verificar se esse desempenho se repete."
+        )
+
+    if likes > 0 and reach > 0:
+        return (
+            "O conteúdo recebeu atenção, principalmente por curtidas, mas ainda apresenta poucos sinais de profundidade. "
+            "O foco deve ser aumentar valor percebido e estímulo à ação."
+        )
+
+    return (
+        "A resposta deste conteúdo ainda está abaixo dos sinais necessários para tratá-lo como referência estratégica. "
+        "O próximo teste deve trabalhar gancho, clareza e estímulo à ação."
+    )
 
 def strategic_analysis(posts):
     posts = posts or []
@@ -411,22 +610,87 @@ VERTICE_USER = os.getenv("VERTICE_USER", "vertice").strip()
 VERTICE_PASSWORD = os.getenv("VERTICE_PASSWORD", "262817").strip()
 VERTICE_SESSION_SECRET = os.getenv("VERTICE_SESSION_SECRET", VERTICE_PASSWORD + "_VERTICE_IA").strip()
 
-def _vertice_token():
+def _vertice_token(username=VERTICE_USER):
+    username = str(username or "").strip()
     return hmac.new(
         VERTICE_SESSION_SECRET.encode("utf-8"),
-        b"VERTICE_IA_SESSION",
+        ("VERTICE_IA_SESSION:" + username).encode("utf-8"),
         hashlib.sha256
     ).hexdigest()
 
-def _vertice_logged(request: Request):
+def _vertice_current_user(request: Request):
     cookie = request.cookies.get("vertice_session", "")
-    return bool(cookie) and hmac.compare_digest(cookie, _vertice_token())
+    if not cookie:
+        return None
+
+    conn = sqlite3.connect(_meta_client_db_path())
+    conn.row_factory = sqlite3.Row
+    try:
+        rows = conn.execute(
+            "SELECT id, username, name, role, meta_account_id, active FROM vertice_users WHERE active = 1"
+        ).fetchall()
+        for row in rows:
+            if hmac.compare_digest(cookie, _vertice_token(row["username"])):
+                return dict(row)
+    finally:
+        conn.close()
+
+    return None
+
+def _vertice_user_meta_account(request: Request):
+    user = _vertice_current_user(request)
+
+    if not user:
+        raise HTTPException(
+            status_code=401,
+            detail="Acesso não autorizado."
+        )
+
+    if user.get("role") == "admin":
+        return None
+
+    account_id = user.get("meta_account_id")
+
+    if not account_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Nenhuma conta Instagram está vinculada a este usuário."
+        )
+
+    conn = sqlite3.connect(_meta_client_db_path())
+    conn.row_factory = sqlite3.Row
+
+    try:
+        row = conn.execute(
+            """
+            SELECT id, client_name, page_id, page_name,
+                   page_access_token, ig_user_id, ig_username
+            FROM meta_connected_accounts
+            WHERE id = ?
+            """,
+            (account_id,)
+        ).fetchone()
+    finally:
+        conn.close()
+
+    if not row:
+        raise HTTPException(
+            status_code=404,
+            detail="Conta Instagram vinculada não foi encontrada."
+        )
+
+    return dict(row)
+
+
+def _vertice_logged(request: Request):
+    return _vertice_current_user(request) is not None
 
 @app.middleware("http")
 async def vertice_visual_login_middleware(request: Request, call_next):
 
     if request.url.path in [
         "/api/facebook-login/callback",
+          "/api/instagram-login/start",          "/api/instagram-login/callback",
         "/api/facebook-login/config",
         "/favicon.ico"
     ]:
@@ -444,6 +708,8 @@ async def vertice_visual_login_middleware(request: Request, call_next):
         "/api/session-check",
         "/api/facebook-login/config",
         "/api/facebook-login/callback",
+          "/api/instagram-login/start",
+          "/api/instagram-login/callback",
         "/favicon.ico"
     ]:
         return await call_next(request)
@@ -459,8 +725,16 @@ async def vertice_visual_login_middleware(request: Request, call_next):
 
 @app.get("/api/session-check")
 def api_session_check(request: Request):
+    user = _vertice_current_user(request)
     return {
-        "logged": _vertice_logged(request),
+        "logged": bool(user),
+        "user": {
+            "id": user["id"],
+            "username": user["username"],
+            "name": user["name"],
+            "role": user["role"],
+            "meta_account_id": user["meta_account_id"]
+        } if user else None,
         "cookies": list(request.cookies.keys()),
         "status": "ok"
     }
@@ -666,16 +940,18 @@ async def vertice_login_api(request: Request):
     username = str(data.get("username", "")).strip()
     password = str(data.get("password", "")).strip()
 
-    if hmac.compare_digest(username, VERTICE_USER) and hmac.compare_digest(password, VERTICE_PASSWORD):
-        response = JSONResponse({"ok": True})
-        response.set_cookie(
-            "vertice_session",
-            _vertice_token(),
-            httponly=True,
-            samesite="lax",
-            max_age=60 * 60 * 12,
-            path="/"
-        )
+    password_hash = hashlib.sha256(password.encode("utf-8")).hexdigest()
+
+    conn = sqlite3.connect(_meta_client_db_path())
+    conn.row_factory = sqlite3.Row
+    try:
+        user = conn.execute("SELECT id, username, name, role, meta_account_id, active FROM vertice_users WHERE username = ? AND password_hash = ? AND active = 1", (username, password_hash)).fetchone()
+    finally:
+        conn.close()
+
+    if user:
+        response = JSONResponse({"ok": True, "user": {"id": user["id"], "username": user["username"], "name": user["name"], "role": user["role"], "meta_account_id": user["meta_account_id"]}})
+        response.set_cookie("vertice_session", _vertice_token(user["username"]), httponly=True, samesite="lax", max_age=60 * 60 * 12, path="/")
         return response
 
     return JSONResponse({"ok": False, "detail": "Usuário ou senha incorretos"}, status_code=401)
@@ -702,58 +978,364 @@ def my_pages():
 def api_resolve(): return {'status':'sucesso', **resolve_account()}
 
 @app.get('/api/posts')
-def api_posts(limit:int=Query(50,ge=1,le=100)): return extract_posts(limit)
+def api_posts(request: Request, limit:int=Query(50,ge=1,le=100)):
+    account = _vertice_user_meta_account(request)
+    return extract_posts(limit, account)
 
 @app.get('/api/report')
-def api_report(limit:int=Query(50,ge=1,le=100)):
-    p=extract_posts(limit); return {'status':'sucesso','facebook_page':p.get('facebook_page'),'instagram_account':p.get('instagram_account'),'report':summarize(p.get('data',[]))}
+def api_report(request: Request, limit:int=Query(50,ge=1,le=100)):
+    account = _vertice_user_meta_account(request)
+    p = extract_posts(limit, account)
+    return {
+        'status':'sucesso',
+        'facebook_page':p.get('facebook_page'),
+        'instagram_account':p.get('instagram_account'),
+        'report':summarize(p.get('data',[]))
+    }
 
 @app.post('/api/snapshots/save')
-def api_save(limit:int=Query(50,ge=1,le=100)):
-    p=extract_posts(limit); return {'status':'sucesso','message':'Snapshot salvo com dados reais da Meta.','snapshot':save_snapshot(p)}
+def api_save(request: Request, limit:int=Query(50,ge=1,le=100)):
+    account = _vertice_user_meta_account(request)
+    p = extract_posts(limit, account)
+    return {
+        'status':'sucesso',
+        'message':'Snapshot salvo com dados reais da Meta.',
+        'snapshot':save_snapshot(p)
+    }
 
 @app.get('/api/snapshots')
-def api_snaps(limit:int=Query(30,ge=1,le=200)):
+def api_snaps(request: Request, limit:int=Query(30,ge=1,le=200)):
+    account = _vertice_user_meta_account(request)
+
     with db() as c:
-        rows=c.execute('SELECT * FROM snapshots ORDER BY datetime(created_at) DESC LIMIT ?',(limit,)).fetchall()
+        if account is None:
+            rows=c.execute(
+                'SELECT * FROM snapshots ORDER BY datetime(created_at) DESC LIMIT ?',
+                (limit,)
+            ).fetchall()
+        else:
+            rows=c.execute(
+                'SELECT * FROM snapshots WHERE instagram_account_id=? '
+                'ORDER BY datetime(created_at) DESC LIMIT ?',
+                (account['ig_user_id'], limit)
+            ).fetchall()
+
     return {'status':'sucesso','snapshots':[dict(r) for r in rows]}
 
 @app.get('/api/history')
-def api_history(days:int=Query(30,ge=1,le=365)):
+def api_history(request: Request, days:int=Query(30,ge=1,le=365)):
+    account = _vertice_user_meta_account(request)
     since=(datetime.now(timezone.utc)-timedelta(days=days)).isoformat()
+
     with db() as c:
-        rows=c.execute('SELECT * FROM snapshots WHERE created_at>=? ORDER BY datetime(created_at) DESC',(since,)).fetchall()
+        if account is None:
+            rows=c.execute(
+                'SELECT * FROM snapshots WHERE created_at>=? '
+                'ORDER BY datetime(created_at) DESC',
+                (since,)
+            ).fetchall()
+        else:
+            rows=c.execute(
+                'SELECT * FROM snapshots WHERE created_at>=? '
+                'AND instagram_account_id=? '
+                'ORDER BY datetime(created_at) DESC',
+                (since, account['ig_user_id'])
+            ).fetchall()
+
     snaps=[dict(r) for r in rows]
-    return {'status':'sucesso','days':days,'snapshots':snaps,'evolution':list(reversed(snaps)),'latest':snaps[0] if snaps else None}
+    return {
+        'status':'sucesso',
+        'days':days,
+        'snapshots':snaps,
+        'evolution':list(reversed(snaps)),
+        'latest':snaps[0] if snaps else None
+    }
 
 @app.get('/api/comparative-report')
-def comparative(days:int=Query(30,ge=1,le=365)):
+def comparative(request: Request, days:int=Query(30,ge=1,le=365)):
+    account = _vertice_user_meta_account(request)
     since=(datetime.now(timezone.utc)-timedelta(days=days)).isoformat()
+
     with db() as c:
-        rows=c.execute('SELECT * FROM snapshots WHERE created_at>=? ORDER BY datetime(created_at) DESC LIMIT 2',(since,)).fetchall()
+        if account is None:
+            rows=c.execute(
+                'SELECT * FROM snapshots WHERE created_at>=? '
+                'ORDER BY datetime(created_at) DESC LIMIT 2',
+                (since,)
+            ).fetchall()
+        else:
+            rows=c.execute(
+                'SELECT * FROM snapshots WHERE created_at>=? '
+                'AND instagram_account_id=? '
+                'ORDER BY datetime(created_at) DESC LIMIT 2',
+                (since, account['ig_user_id'])
+            ).fetchall()
+
     snaps=[dict(r) for r in rows]
-    if not snaps: return {'status':'vazio','message':'Nenhum snapshot salvo ainda.','action_plan':['Importe dados reais e salve o primeiro snapshot.']}
-    latest=snaps[0]; previous=snaps[1] if len(snaps)>1 else None
-    if not previous: return {'status':'primeiro_snapshot','message':'Existe apenas um snapshot salvo. Salve outro depois para comparar evolução.','latest':latest,'previous':None,'delta_totals':{},'top_gains':[],'top_losses':[],'action_plan':['Use este snapshot como linha de base.','Salve outro snapshot no dia seguinte ou após novas publicações.']}
-    latest_posts=snapshot_posts(latest['id']); prev={p['post_id']:p for p in snapshot_posts(previous['id'])}
+
+    if not snaps:
+        return {
+            'status':'vazio',
+            'message':'Nenhum snapshot salvo ainda.',
+            'action_plan':['Importe dados reais e salve o primeiro snapshot.']
+        }
+
+    latest=snaps[0]
+    previous=snaps[1] if len(snaps)>1 else None
+
+    if not previous:
+        return {
+            'status':'primeiro_snapshot',
+            'message':'Existe apenas um snapshot salvo. Salve outro depois para comparar evolução.',
+            'latest':latest,
+            'previous':None,
+            'delta_totals':{},
+            'top_gains':[],
+            'top_losses':[],
+            'strategic_reading':None,
+            'evolution_status':'linha_de_base',
+            'action_plan':[
+                'Use este snapshot como linha de base.',
+                'Salve outro snapshot depois de novas publicações para medir evolução.'
+            ]
+        }
+
+    def num(value):
+        try:
+            return float(value or 0)
+        except Exception:
+            return 0.0
+
+    def pct_delta(current, old):
+        old=num(old)
+        current=num(current)
+        if old == 0:
+            return 100.0 if current > 0 else 0.0
+        return round(((current-old)/old)*100, 2)
+
+    latest_posts=snapshot_posts(latest['id'])
+    previous_posts=snapshot_posts(previous['id'])
+    prev={p['post_id']:p for p in previous_posts}
+
     comp=[]
+
     for p in latest_posts:
         old=prev.get(p['post_id'])
-        if not old: continue
-        comp.append({'post_id':p['post_id'],'caption':p['caption'],'permalink':p['permalink'],'delta_reach':(p['reach'] or 0)-(old['reach'] or 0),'delta_saved':(p['saved'] or 0)-(old['saved'] or 0),'delta_shares':(p['shares'] or 0)-(old['shares'] or 0),'delta_likes':(p['like_count'] or 0)-(old['like_count'] or 0),'delta_comments':(p['comments_count'] or 0)-(old['comments_count'] or 0)})
-    gains=sorted(comp,key=lambda x:(x['delta_reach'],x['delta_saved']),reverse=True)[:5]
-    losses=sorted(comp,key=lambda x:(x['delta_reach'],x['delta_saved']))[:5]
-    delta={'alcance_total':(latest['alcance_total'] or 0)-(previous['alcance_total'] or 0),'salvos_total':(latest['salvos_total'] or 0)-(previous['salvos_total'] or 0),'shares_total':(latest['shares_total'] or 0)-(previous['shares_total'] or 0),'comentarios_total':(latest['comentarios_total'] or 0)-(previous['comentarios_total'] or 0),'curtidas_total':(latest['curtidas_total'] or 0)-(previous['curtidas_total'] or 0)}
+        if not old:
+            continue
+
+        reach=num(p.get('reach'))
+        old_reach=num(old.get('reach'))
+        saved=num(p.get('saved'))
+        old_saved=num(old.get('saved'))
+        shares=num(p.get('shares'))
+        old_shares=num(old.get('shares'))
+        likes=num(p.get('like_count'))
+        old_likes=num(old.get('like_count'))
+        comments=num(p.get('comments_count'))
+        old_comments=num(old.get('comments_count'))
+        engagement=num(p.get('engagement_rate'))
+        old_engagement=num(old.get('engagement_rate'))
+        potential=num(p.get('potential_score'))
+        old_potential=num(old.get('potential_score'))
+
+        comp.append({
+            'post_id':p['post_id'],
+            'caption':p.get('caption') or '',
+            'permalink':p.get('permalink'),
+            'media_type':p.get('media_type'),
+            'delta_reach':int(reach-old_reach),
+            'delta_saved':int(saved-old_saved),
+            'delta_shares':int(shares-old_shares),
+            'delta_likes':int(likes-old_likes),
+            'delta_comments':int(comments-old_comments),
+            'delta_engagement_rate':round(engagement-old_engagement,2),
+            'delta_potential':round(potential-old_potential,2),
+            'reach_variation_pct':pct_delta(reach,old_reach),
+            'saved_variation_pct':pct_delta(saved,old_saved),
+            'shares_variation_pct':pct_delta(shares,old_shares),
+            'engagement_variation_pct':pct_delta(engagement,old_engagement),
+            'potential_variation_pct':pct_delta(potential,old_potential)
+        })
+
+    def evolution_key(x):
+        return (
+            x['delta_potential'],
+            x['delta_saved'],
+            x['delta_shares'],
+            x['delta_reach']
+        )
+
+    # Só classifica como ganho quando existe melhora em pelo menos
+    # uma métrica; variações neutras não entram na lista.
+    gains = sorted(
+        [
+            x for x in comp
+            if any((
+                x['delta_potential'] > 0,
+                x['delta_saved'] > 0,
+                x['delta_shares'] > 0,
+                x['delta_reach'] > 0
+            ))
+        ],
+        key=evolution_key,
+        reverse=True
+    )[:5]
+
+    # Só classifica como perda quando existe queda em pelo menos
+    # uma métrica; variações neutras não entram na lista.
+    losses = sorted(
+        [
+            x for x in comp
+            if any((
+                x['delta_potential'] < 0,
+                x['delta_saved'] < 0,
+                x['delta_shares'] < 0,
+                x['delta_reach'] < 0
+            ))
+        ],
+        key=evolution_key
+    )[:5]
+
+    delta={
+        'alcance_total':int(num(latest.get('alcance_total'))-num(previous.get('alcance_total'))),
+        'salvos_total':int(num(latest.get('salvos_total'))-num(previous.get('salvos_total'))),
+        'shares_total':int(num(latest.get('shares_total'))-num(previous.get('shares_total'))),
+        'comentarios_total':int(num(latest.get('comentarios_total'))-num(previous.get('comentarios_total'))),
+        'curtidas_total':int(num(latest.get('curtidas_total'))-num(previous.get('curtidas_total'))),
+        'posts':int(num(latest.get('total_posts'))-num(previous.get('total_posts')))
+    }
+
+    reach_pct=pct_delta(latest.get('alcance_total'),previous.get('alcance_total'))
+    saved_pct=pct_delta(latest.get('salvos_total'),previous.get('salvos_total'))
+    shares_pct=pct_delta(latest.get('shares_total'),previous.get('shares_total'))
+    comments_pct=pct_delta(latest.get('comentarios_total'),previous.get('comentarios_total'))
+
+    avg_potential_latest=round(
+        sum(num(p.get('potential_score')) for p in latest_posts)/len(latest_posts),2
+    ) if latest_posts else 0
+
+    avg_potential_previous=round(
+        sum(num(p.get('potential_score')) for p in previous_posts)/len(previous_posts),2
+    ) if previous_posts else 0
+
+    avg_engagement_latest=round(
+        sum(num(p.get('engagement_rate')) for p in latest_posts)/len(latest_posts),2
+    ) if latest_posts else 0
+
+    avg_engagement_previous=round(
+        sum(num(p.get('engagement_rate')) for p in previous_posts)/len(previous_posts),2
+    ) if previous_posts else 0
+
+    potential_delta=round(avg_potential_latest-avg_potential_previous,2)
+    engagement_delta=round(avg_engagement_latest-avg_engagement_previous,2)
+
+    if reach_pct > 10 and (saved_pct > 0 or shares_pct > 0):
+        evolution_status='crescimento_com_qualidade'
+        strategic_reading=(
+            'A evolução mostra ganho de distribuição acompanhado por sinais de profundidade. '
+            'O próximo ciclo deve preservar os temas e formatos que geraram resposta.'
+        )
+    elif reach_pct > 10 and saved_pct <= 0 and shares_pct <= 0:
+        evolution_status='alcance_sem_profundidade'
+        strategic_reading=(
+            'O alcance cresceu, mas a profundidade da resposta não acompanhou. '
+            'A prioridade é transformar exposição em valor percebido.'
+        )
+    elif reach_pct <= 0 and (saved_pct > 0 or shares_pct > 0):
+        evolution_status='qualidade_com_distribuicao_limitada'
+        strategic_reading=(
+            'A distribuição não avançou, mas existem sinais de qualidade na resposta. '
+            'A oportunidade está em melhorar a distribuição mantendo os temas que demonstraram aderência.'
+        )
+    elif potential_delta > 0 or engagement_delta > 0:
+        evolution_status='qualidade_em_evolucao'
+        strategic_reading=(
+            'A qualidade média dos conteúdos apresentou evolução. '
+            'O foco deve ser repetir os padrões que melhoraram potencial e interação.'
+        )
+    else:
+        evolution_status='estavel_ou_em_revisao'
+        strategic_reading=(
+            'A evolução ainda não apresenta sinais consistentes de avanço. '
+            'O próximo ciclo deve priorizar testes controlados de tema, formato e gancho.'
+        )
+
     plan=[]
-    plan.append('Alcance cresceu: repita tema/formato dos posts com maior delta.' if delta['alcance_total']>0 else 'Alcance caiu ou estagnou: revisar gancho, constância e clareza da oferta.')
-    plan.append('Salvamentos cresceram: usar esses temas como base para calendário e possível tráfego.' if delta['salvos_total']>0 else 'Salvamentos não cresceram: produzir checklist, tutorial, passo a passo e erro comum.')
-    if gains: plan.append('Melhor evolução: '+(gains[0]['caption'] or '')[:100]+'. Avaliar impulsionamento com verba baixa.')
-    return {'status':'sucesso','message':'Comparativo gerado com os dois últimos snapshots.','latest':latest,'previous':previous,'delta_totals':delta,'top_gains':gains,'top_losses':losses,'action_plan':plan}
+
+    if reach_pct > 0:
+        plan.append(
+            f'Alcance: crescimento de {reach_pct}%. Identificar os formatos responsáveis pelo aumento e repetir o padrão.'
+        )
+    else:
+        plan.append(
+            f'Alcance: variação de {reach_pct}%. Revisar distribuição, gancho e constância antes de aumentar volume.'
+        )
+
+    if saved_pct > 0:
+        plan.append(
+            f'Salvamentos: crescimento de {saved_pct}%. Transformar esses temas em novos conteúdos de valor.'
+        )
+    else:
+        plan.append(
+            'Salvamentos: sem crescimento. Priorizar conteúdos úteis, checklists, passo a passo e referências.'
+        )
+
+    if shares_pct > 0:
+        plan.append(
+            f'Compartilhamentos: crescimento de {shares_pct}%. Explorar conteúdos com identificação e utilidade compartilhável.'
+        )
+    else:
+        plan.append(
+            'Compartilhamentos: sem crescimento. Testar mensagens mais específicas, opinativas ou facilmente encaminháveis.'
+        )
+
+    if potential_delta > 0:
+        plan.append(
+            f'Potencial médio: +{potential_delta} pontos. Repetir os padrões dos conteúdos que mais evoluíram.'
+        )
+    elif potential_delta < 0:
+        plan.append(
+            f'Potencial médio: {potential_delta} pontos. Revisar os conteúdos que perderam eficiência antes de escalar.'
+        )
+
+    if gains:
+        best=gains[0]
+        plan.append(
+            'Conteúdo com maior evolução estratégica: '
+            + (best['caption'][:100] or 'publicação sem legenda')
+            + '. Usar como referência para o próximo ciclo.'
+        )
+
+    return {
+        'status':'sucesso',
+        'message':'Comparativo estratégico gerado com os dois últimos snapshots.',
+        'period_days':days,
+        'matched_posts':len(comp),
+        'latest':latest,
+        'previous':previous,
+        'delta_totals':delta,
+        'variation':{
+            'alcance_pct':reach_pct,
+            'salvos_pct':saved_pct,
+            'shares_pct':shares_pct,
+            'comentarios_pct':comments_pct,
+            'potencial_medio_delta':potential_delta,
+            'engajamento_medio_delta':engagement_delta
+        },
+        'evolution_status':evolution_status,
+        'strategic_reading':strategic_reading,
+        'top_gains':gains,
+        'top_losses':losses,
+        'action_plan':plan
+    }
 
 
 @app.get('/api/advanced-report')
-def api_advanced_report(limit:int=Query(50,ge=1,le=100)):
-    p = extract_posts(limit)
+def api_advanced_report(request: Request, limit:int=Query(50,ge=1,le=100)):
+    account = _vertice_user_meta_account(request)
+    p = extract_posts(limit, account)
+
     return {
         'status': 'sucesso',
         'facebook_page': p.get('facebook_page'),
@@ -762,8 +1344,9 @@ def api_advanced_report(limit:int=Query(50,ge=1,le=100)):
     }
 
 @app.get('/api/strategic-report')
-def api_strategic_report(limit:int=Query(50,ge=1,le=100)):
-    p = extract_posts(limit)
+def api_strategic_report(request: Request, limit:int=Query(50,ge=1,le=100)):
+    account = _vertice_user_meta_account(request)
+    p = extract_posts(limit, account)
     return {
         'status': 'sucesso',
         'facebook_page': p.get('facebook_page'),
@@ -894,6 +1477,8 @@ def api_token_monitor():
 
 @app.post("/api/update-token")
 async def api_update_token(request: Request):
+    global TOKEN
+
     data = await request.json()
     novo_token = str(data.get("token", "")).strip()
 
@@ -904,30 +1489,38 @@ async def api_update_token(request: Request):
         raise HTTPException(status_code=400, detail="Token muito curto. Verifique se copiou completo.")
 
     env_path = Path(__file__).parent / ".env"
+    linhas = env_path.read_text(encoding="utf-8").splitlines() if env_path.exists() else []
 
-    if env_path.exists():
-        env_text = env_path.read_text(encoding="utf-8")
-    else:
-        env_text = ""
+    # Corrige também a chave duplicada/malformada existente.
+    novas_linhas = []
+    token_inserido = False
 
-    if "FACEBOOK_ACCESS_TOKEN=" in env_text:
-        env_text = re.sub(
-            r"(?m)^FACEBOOK_ACCESS_TOKEN=.*$",
-            f"FACEBOOK_ACCESS_TOKEN={novo_token}",
-            env_text
-        )
-    else:
-        env_text = env_text.rstrip() + f"\nFACEBOOK_ACCESS_TOKEN={novo_token}\n"
+    for linha in linhas:
+        chave = linha.split("=", 1)[0].strip() if "=" in linha else linha.strip()
 
-    env_path.write_text(env_text, encoding="utf-8")
+        if chave in ("FACEBOOK_ACCESS_TOKEN", "FACEBOOK_ACCESS_TOKEN:FACEBOOK_ACCESS_TOKEN"):
+            if not token_inserido:
+                novas_linhas.append(f"FACEBOOK_ACCESS_TOKEN={novo_token}")
+                token_inserido = True
+            continue
+
+        novas_linhas.append(linha)
+
+    if not token_inserido:
+        novas_linhas.append(f"FACEBOOK_ACCESS_TOKEN={novo_token}")
+
+    conteudo = "\n".join(novas_linhas).rstrip() + "\n"
+    env_path.write_text(conteudo, encoding="utf-8")
+
+    # Atualiza a configuração do processo atual sem exigir reinicialização.
+    os.environ["FACEBOOK_ACCESS_TOKEN"] = novo_token
+    TOKEN = novo_token
 
     return {
         "status": "sucesso",
-        "message": "Token salvo no backend/.env. Reinicie a VÉRTICE IA para usar o novo token.",
-        "next_step": "Pare o sistema com Ctrl+C e rode iniciar_vertice_ia.bat novamente."
+        "message": "Token salvo e carregado pelo backend.",
+        "next_step": "Clique em Testar conexão Meta para validar o token."
     }
-
-
 
 # ==============================
 # RELATÓRIO DE CLIENTE POR @ - VÉRTICE IA
@@ -1026,32 +1619,114 @@ def _public_client_strategy(posts, profile):
 
     formatos_lista = sorted(formatos_lista, key=lambda x: x["media_potencial"], reverse=True)
 
+    # ============================================================
+    # LEITURA ESTRATÉGICA ESPECÍFICA DO PERFIL
+    # ============================================================
+
     if not posts:
-        resumo = "Não foi possível localizar publicações recentes para esse perfil."
-        diagnostico = "Verifique se o perfil é profissional, público e se o @ foi digitado corretamente."
-    elif repetir:
-        resumo = "O perfil do cliente foi localizado e possui publicações públicas suficientes para uma leitura inicial."
-        diagnostico = "Esta análise usa dados públicos. Para métricas completas como alcance, salvos e compartilhamentos, o cliente precisa conectar a própria conta."
+        resumo = "Não foram encontradas publicações públicas suficientes para gerar uma leitura estratégica."
+        diagnostico = (
+            "A VÉRTICE não recebeu uma amostra suficiente de conteúdo para identificar "
+            "um padrão confiável. Verifique se o perfil é profissional, público e se o @ está correto."
+        )
+        plano_7_dias = [
+            "Dia 1: validar o perfil e garantir que as publicações estejam públicas.",
+            "Dia 2: publicar conteúdo apresentando claramente a oferta.",
+            "Dia 3: publicar conteúdo educativo relacionado ao serviço principal.",
+            "Dia 4: publicar prova social, resultado ou bastidor.",
+            "Dia 5: publicar um conteúdo com pergunta ou CTA.",
+            "Dia 6: observar quais temas geram resposta.",
+            "Dia 7: gerar nova análise com uma amostra maior."
+        ]
+        texto_cliente = (
+            f"Não foi possível construir uma leitura estratégica confiável do perfil "
+            f"@{profile.get('username')}. A amostra pública retornada foi insuficiente."
+        )
     else:
-        resumo = "O perfil foi localizado, mas a base pública ainda é limitada."
-        diagnostico = "A análise pública serve como diagnóstico inicial, não substitui insights completos da conta."
+        top = ranked[0]
+        top_caption = top.get("caption_short") or "publicação sem legenda"
+        top_terms_text = ", ".join(top_terms[:4]) if top_terms else "temas ainda não identificados"
+        best_format = formatos_lista[0].get("formato") if formatos_lista else "formato não identificado"
 
-    plano_7_dias = [
-        "Dia 1: repetir o tema da publicação com maior curtida/comentário usando novo gancho.",
-        "Dia 2: transformar o melhor conteúdo em stories com enquete ou caixinha.",
-        "Dia 3: criar conteúdo salvável: checklist, passo a passo ou erros comuns.",
-        "Dia 4: publicar prova de autoridade ou bastidor ligado ao melhor tema.",
-        "Dia 5: criar uma variação em Reels com CTA mais direto.",
-        "Dia 6: observar curtidas, comentários e respostas antes de decidir tráfego.",
-        "Dia 7: gerar nova análise e comparar os posts mais fortes."
-    ]
+        top_like_ratio = (
+            top["likes"] / avg_likes
+            if avg_likes > 0
+            else 0
+        )
 
-    texto_cliente = (
-        f"Análise pública do perfil @{profile.get('username')}: foram avaliadas {len(posts)} publicações recentes, "
-        f"com {total_likes} curtidas e {total_comments} comentários no total. "
-        "Esta leitura identifica temas e formatos com melhor resposta pública, mas não substitui os insights internos da conta. "
-        "Para uma análise completa de alcance, salvamentos, compartilhamentos e evolução real, é necessário conectar a conta profissional do cliente à VÉRTICE IA."
-    )
+        top_comment_ratio = (
+            top["comments"] / avg_comments
+            if avg_comments > 0
+            else 0
+        )
+
+        # RESUMO BASEADO NOS DADOS DO PERFIL
+        resumo = (
+            f"O perfil @{profile.get('username')} foi analisado com {len(posts)} publicações. "
+            f"O conteúdo com maior resposta pública alcançou {top['likes']} curtidas "
+            f"e {top['comments']} comentários. "
+            f"O formato com maior potencial médio na amostra foi {best_format}. "
+            f"Os temas/termos mais recorrentes foram: {top_terms_text}."
+        )
+
+        # DIAGNÓSTICO INDIVIDUAL
+        if top_comment_ratio >= 1.5 and top["comments"] > 0:
+            diagnostico = (
+                f"O principal sinal de força do perfil está na capacidade de gerar conversa. "
+                f"O conteúdo de maior resposta teve {top['comments']} comentários, "
+                f"acima da média de {avg_comments:.1f} comentários por publicação. "
+                f"O próximo teste deve explorar o mesmo eixo temático de '{top_caption[:90]}' "
+                f"com uma nova abordagem."
+            )
+
+        elif top_like_ratio >= 1.5:
+            diagnostico = (
+                f"O perfil apresenta concentração de atenção em determinados conteúdos. "
+                f"A publicação de maior resposta teve {top['likes']} curtidas, "
+                f"aproximadamente {top_like_ratio:.1f}x a média de {avg_likes:.1f}. "
+                f"Isso indica que o tema ou abordagem de '{top_caption[:90]}' "
+                f"merece ser testado novamente sem simplesmente duplicar a publicação."
+            )
+
+        elif top_terms:
+            diagnostico = (
+                f"A análise encontrou recorrência nos temas {top_terms_text}. "
+                f"Entretanto, a resposta pública está relativamente distribuída entre as publicações, "
+                f"sem uma concentração muito forte em um único conteúdo. "
+                f"A oportunidade está em transformar os temas recorrentes em séries de conteúdo "
+                f"e medir quais deles geram maior resposta."
+            )
+
+        else:
+            diagnostico = (
+                f"A amostra apresenta {total_likes} curtidas e {total_comments} comentários, "
+                f"mas ainda não existe concentração suficiente de resposta para apontar "
+                f"um único tema como referência. O próximo ciclo deve testar variações de formato, "
+                f"gancho e CTA e comparar novamente os resultados."
+            )
+
+        # PLANO DINÂMICO
+        plano_7_dias = [
+            f"Dia 1: criar uma nova publicação inspirada no conteúdo de maior resposta: '{top_caption[:100]}'.",
+            f"Dia 2: desenvolver uma variação do formato {best_format}, mantendo o tema principal.",
+            f"Dia 3: transformar um dos temas recorrentes ({top_terms_text}) em conteúdo educativo.",
+            "Dia 4: publicar prova social, resultado, bastidor ou demonstração relacionada à oferta.",
+            "Dia 5: testar um CTA direto para estimular comentário, compartilhamento ou contato.",
+            "Dia 6: comparar a resposta do novo conteúdo com a média atual do perfil.",
+            "Dia 7: gerar nova análise e identificar quais testes realmente ganharam força."
+        ]
+
+        texto_cliente = (
+            f"A VÉRTICE IA analisou {len(posts)} publicações públicas do perfil "
+            f"@{profile.get('username')}. "
+            f"A publicação de maior resposta registrou {top['likes']} curtidas e "
+            f"{top['comments']} comentários, enquanto a média da amostra ficou em "
+            f"{avg_likes:.1f} curtidas e {avg_comments:.1f} comentários por publicação. "
+            f"O formato com maior potencial médio foi {best_format} e os termos mais recorrentes "
+            f"foram {top_terms_text}. "
+            f"A leitura indica que o próximo ciclo deve partir desses sinais reais, "
+            f"testando novas abordagens em vez de repetir conteúdo de forma automática."
+        )
 
     return {
         "modo": "cliente_por_arroba_publico",
@@ -1092,7 +1767,7 @@ def _public_client_strategy(posts, profile):
     }
 
 @app.get("/api/client-discovery")
-def api_client_discovery(username: str, limit: int = Query(25, ge=1, le=50)):
+def api_client_discovery(username: str, limit: int = Query(50, ge=1, le=50)):
     version = os.getenv("META_API_VERSION", "v25.0").strip()
     token = os.getenv("FACEBOOK_ACCESS_TOKEN", "").strip()
     page_id = os.getenv("FACEBOOK_PAGE_ID", "").strip()
@@ -1241,7 +1916,7 @@ def api_client_discovery(username: str, limit: int = Query(25, ge=1, le=50)):
     }
 
 @app.get("/api/client-advanced-report")
-def api_client_advanced_report(username: str, limit: int = Query(25, ge=1, le=50)):
+def api_client_advanced_report(username: str, limit: int = Query(50, ge=1, le=50)):
     discovery = api_client_discovery(username=username, limit=limit)
 
     return {
@@ -1646,7 +2321,7 @@ def _vertice_public_profile_analysis(profile, posts):
 
 
 @app.get("/api/profile-public-analysis")
-def api_profile_public_analysis(profile: str, limit: int = Query(12, ge=1, le=25)):
+def api_profile_public_analysis(profile: str, limit: int = Query(25, ge=1, le=50)):
     version = os.getenv("META_API_VERSION", "v25.0").strip()
     token = os.getenv("FACEBOOK_ACCESS_TOKEN", "").strip()
     page_id = os.getenv("FACEBOOK_PAGE_ID", "").strip()
@@ -2079,6 +2754,40 @@ def _meta_login_scopes():
         "pages_show_list,pages_read_engagement,instagram_basic,instagram_manage_insights"
     ).strip()
 
+def _instagram_login_redirect_uri():
+    return "https://appverticeia.com.br/api/instagram-login/callback"
+
+
+def _instagram_login_scopes():
+    return os.getenv(
+        "INSTAGRAM_LOGIN_SCOPES",
+        "instagram_business_basic"
+    ).strip()
+
+def _instagram_exchange_code(code: str):
+    token_url = "https://api.instagram.com/oauth/access_token"
+
+    resp = requests.post(
+        token_url,
+        data={
+            "client_id": os.getenv("INSTAGRAM_LOGIN_CLIENT_ID", "").strip(),
+            "client_secret": os.getenv("INSTAGRAM_LOGIN_APP_SECRET", "").strip(),
+            "grant_type": "authorization_code",
+            "redirect_uri": _instagram_login_redirect_uri(),
+            "code": code,
+        },
+        timeout=30,
+    )
+
+    try:
+        data = resp.json()
+    except Exception:
+        data = {"raw": resp.text}
+
+    if not resp.ok:
+        raise HTTPException(status_code=400, detail={"erro": "Falha ao trocar código do Instagram por token.", "meta": data})
+
+    return data
 def _meta_require_config():
     if not _meta_app_id():
         raise HTTPException(status_code=400, detail="META_APP_ID não configurado no backend/.env.")
@@ -2149,6 +2858,36 @@ def _meta_graph_get(path: str, token_or_params=None, params: dict | None = None)
     return data
 
 
+def _instagram_exchange_long_lived_token(short_token: str):
+    token_url = "https://graph.instagram.com/access_token"
+
+    resp = requests.get(
+        token_url,
+        params={
+            "grant_type": "ig_exchange_token",
+            "client_secret": os.getenv("INSTAGRAM_LOGIN_APP_SECRET", "").strip(),
+            "access_token": short_token,
+        },
+        timeout=30,
+    )
+
+    try:
+        data = resp.json()
+    except Exception:
+        data = {"raw": resp.text}
+
+    if not resp.ok:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "erro": "Falha ao trocar token curto do Instagram por token de longa duração.",
+                "meta": data,
+            }
+        )
+
+    return data
+
+
 @app.get("/api/facebook-login/config")
 def api_facebook_login_config():
     return {
@@ -2174,11 +2913,18 @@ def api_facebook_login_debug_redirect():
 
 
 @app.get("/api/facebook-login/start")
-def api_facebook_login_start(client_name: str = ""):
+def api_facebook_login_start(request: Request, client_name: str = ""):
     _ensure_meta_client_tables()
     _meta_require_config()
 
+    current_user = _vertice_current_user(request)
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Sessão inválida.")
+
     client_name = (client_name or "").strip()
+    if current_user["role"] != "admin":
+        client_name = current_user["name"]
+
     state = secrets.token_urlsafe(32)
 
     db = _meta_client_db_path()
@@ -2186,8 +2932,8 @@ def api_facebook_login_start(client_name: str = ""):
 
     try:
         conn.execute(
-            "INSERT INTO meta_oauth_states (state, client_name) VALUES (?, ?)",
-            (state, client_name)
+            "INSERT INTO meta_oauth_states (state, client_name, vertice_user_id) VALUES (?, ?, ?)",
+            (state, client_name, current_user["id"])
         )
         conn.commit()
     finally:
@@ -2211,6 +2957,350 @@ def api_facebook_login_start(client_name: str = ""):
         "redirect_uri": "https://appverticeia.com.br/api/facebook-login/callback",
         "scopes": _meta_login_scopes()
     }
+
+
+@app.get("/api/instagram-login/start")
+def api_instagram_login_start(request: Request, client_name: str = ""):
+    _ensure_meta_client_tables()
+    _meta_require_config()
+
+    current_user = _vertice_current_user(request)
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Sessão inválida.")
+
+    client_name = (client_name or "").strip()
+    if current_user["role"] != "admin":
+        client_name = current_user["name"]
+    state = secrets.token_urlsafe(32)
+
+    db = _meta_client_db_path()
+    conn = sqlite3.connect(db)
+    try:
+        conn.execute(
+            "INSERT INTO meta_oauth_states (state, client_name, vertice_user_id) VALUES (?, ?, ?)",
+            (state, client_name, current_user["id"])
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    params = {
+        "client_id": os.getenv("INSTAGRAM_LOGIN_CLIENT_ID", "").strip(),
+        "redirect_uri": _instagram_login_redirect_uri(),
+        "state": state,
+        "response_type": "code",
+        "scope": _instagram_login_scopes(),
+        "force_reauth": "true"
+    }
+
+    login_url = (
+        "https://www.instagram.com/oauth/authorize?"
+        + urllib.parse.urlencode(params)
+    )
+
+    return {
+        "status": "sucesso",
+        "login_url": login_url,
+        "redirect_uri": _instagram_login_redirect_uri(),
+        "scopes": _instagram_login_scopes()
+    }
+
+
+@app.get("/api/instagram-login/callback")
+def api_instagram_login_callback(
+    code: str = "",
+    state: str = "",
+    error: str = "",
+    error_description: str = ""
+):
+    _ensure_meta_client_tables()
+    _meta_require_config()
+
+    if error:
+        return HTMLResponse(f"""
+        <html>
+        <body style="font-family:Arial;background:#020617;color:white;padding:40px">
+          <h1>Login do Instagram cancelado</h1>
+          <p>{error}</p>
+          <p>{error_description}</p>
+        </body>
+        </html>
+        """)
+
+    if not code:
+        return HTMLResponse("""
+        <html>
+        <body style="font-family:Arial;background:#020617;color:white;padding:40px">
+          <h1>Erro</h1>
+          <p>A Meta não retornou o código de autorização do Instagram.</p>
+        </body>
+        </html>
+        """)
+
+    db = _meta_client_db_path()
+    conn = sqlite3.connect(db)
+    conn.row_factory = sqlite3.Row
+
+    try:
+        row = conn.execute(
+            "SELECT * FROM meta_oauth_states WHERE state = ?",
+            (state,)
+        ).fetchone()
+
+        if not row:
+            return HTMLResponse("""
+            <html>
+            <body style="font-family:Arial;background:#020617;color:white;padding:40px">
+              <h1>State inválido</h1>
+              <p>O login não pôde ser validado. Gere um novo link pela VÉRTICE IA.</p>
+            </body>
+            </html>
+            """)
+
+        client_name = row["client_name"] or ""
+        vertice_user_id = row["vertice_user_id"]
+        vertice_user_id = row["vertice_user_id"]
+
+        short_data = _instagram_exchange_code(code)
+        short_token = short_data.get("access_token")
+
+        if not short_token:
+            return HTMLResponse("""
+            <html>
+            <body style="font-family:Arial;background:#020617;color:white;padding:40px">
+              <h1>Erro ao obter token</h1>
+              <p>A Meta não retornou um token de acesso do Instagram.</p>
+            </body>
+            </html>
+            """)
+
+        long_data = _instagram_exchange_long_lived_token(short_token)
+        instagram_token = long_data.get("access_token") or short_token
+
+        expires_in = int(long_data.get("expires_in") or 0)
+
+        token_expires_at = None
+        if expires_in > 0:
+            token_expires_at = (
+                datetime.utcnow() + timedelta(seconds=expires_in)
+            ).isoformat()
+
+        profile_resp = requests.get(
+            "https://graph.instagram.com/me",
+            params={
+                "fields": "id,username,name",
+                "access_token": instagram_token,
+            },
+            timeout=30,
+        )
+
+        try:
+            profile = profile_resp.json()
+        except Exception:
+            profile = {"raw": profile_resp.text}
+
+        if not profile_resp.ok or not profile.get("id"):
+            return HTMLResponse(f"""
+            <html>
+            <body style="font-family:Arial;background:#020617;color:white;padding:40px">
+              <h1>Erro ao identificar o Instagram</h1>
+              <pre>{json.dumps(profile, ensure_ascii=False, indent=2)}</pre>
+            </body>
+            </html>
+            """)
+
+        ig_user_id = str(profile.get("id"))
+        ig_username = profile.get("username") or ""
+        ig_name = profile.get("name") or ig_username
+
+        raw_payload = {
+            "login_type": "instagram_login",
+            "profile": profile,
+            "token": {
+                "expires_in": expires_in
+            }
+        }
+
+        existing = conn.execute(
+            """
+            SELECT id
+              FROM meta_connected_accounts
+             WHERE ig_user_id = ?
+            """,
+            (ig_user_id,)
+        ).fetchone()
+
+        if existing:
+            item_id = existing["id"]
+
+            conn.execute("""
+                UPDATE meta_connected_accounts
+                   SET client_name = ?,
+                       fb_user_id = NULL,
+                       fb_user_name = ?,
+                       user_access_token = ?,
+                       token_expires_at = ?,
+                       page_id = NULL,
+                       page_name = NULL,
+                       page_access_token = ?,
+                       ig_username = ?,
+                       raw_payload = ?,
+                       updated_at = CURRENT_TIMESTAMP
+                 WHERE id = ?
+            """, (
+                client_name,
+                ig_name,
+                instagram_token,
+                token_expires_at,
+                instagram_token,
+                ig_username,
+                json.dumps(raw_payload, ensure_ascii=False),
+                item_id
+            ))
+        else:
+            cur = conn.execute("""
+                INSERT INTO meta_connected_accounts (
+                    client_name,
+                    fb_user_id,
+                    fb_user_name,
+                    user_access_token,
+                    token_expires_at,
+                    page_id,
+                    page_name,
+                    page_access_token,
+                    ig_user_id,
+                    ig_username,
+                    raw_payload
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                client_name,
+                None,
+                ig_name,
+                instagram_token,
+                token_expires_at,
+                None,
+                None,
+                instagram_token,
+                ig_user_id,
+                ig_username,
+                json.dumps(raw_payload, ensure_ascii=False)
+            ))
+            item_id = cur.lastrowid
+
+        linked_user = conn.execute(
+            "SELECT id, username, role FROM vertice_users WHERE meta_account_id = ? AND active = 1",
+            (item_id,)
+        ).fetchone()
+
+        generated_username = ""
+        generated_password = ""
+
+        if linked_user:
+            generated_username = linked_user["username"]
+
+        else:
+            state_user = conn.execute(
+                "SELECT id, username, role, meta_account_id FROM vertice_users WHERE id = ? AND active = 1",
+                (vertice_user_id,)
+            ).fetchone()
+
+            if state_user and state_user["role"] != "admin":
+                conn.execute(
+                    "UPDATE vertice_users SET meta_account_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                    (item_id, state_user["id"])
+                )
+                generated_username = state_user["username"]
+
+            elif state_user and state_user["role"] == "admin" and state_user["meta_account_id"] == item_id:
+                generated_username = state_user["username"]
+
+            else:
+                base_username = "".join(
+                    ch.lower() for ch in str(ig_username or "")
+                    if ch.isalnum()
+                )
+
+                if not base_username:
+                    base_username = "cliente" + str(item_id)
+
+                username = base_username
+                suffix = 2
+
+                while conn.execute(
+                    "SELECT 1 FROM vertice_users WHERE username = ?",
+                    (username,)
+                ).fetchone():
+                    username = base_username + str(suffix)
+                    suffix += 1
+
+                generated_password = secrets.token_urlsafe(9)
+                password_hash = hashlib.sha256(
+                    generated_password.encode("utf-8")
+                ).hexdigest()
+
+                client_display_name = client_name or ig_name or ("@" + ig_username)
+
+                conn.execute(
+                    "INSERT INTO vertice_users (username, password_hash, name, role, meta_account_id, active) VALUES (?, ?, ?, client, ?, 1)",
+                    (
+                        username,
+                        password_hash,
+                        client_display_name,
+                        item_id
+                    )
+                )
+
+                generated_username = username
+
+        conn.execute(
+            "DELETE FROM meta_oauth_states WHERE state = ?",
+            (state,)
+        )
+
+        conn.commit()
+
+        return HTMLResponse(f"""
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Instagram conectado</title>
+        </head>
+        <body style="font-family:Arial;background:#020617;color:white;padding:40px">
+          <h1 style="color:#a7f3d0">Instagram conectado com sucesso</h1>
+          <p>O perfil profissional <strong>@{ig_username}</strong> foi conectado à VÉRTICE IA.</p>
+          {(
+              "<div style=\"margin:25px 0;padding:22px;background:#0f172a;border:1px solid #334155;border-radius:14px\">"
+              "<h2 style=\"color:#a7f3d0;margin-top:0\">Acesso do cliente</h2>"
+              f"<p><strong>Usuário:</strong> {generated_username}</p>"
+              f"<p><strong>Senha:</strong> {generated_password}</p>"
+              "<p style=\"color:#fbbf24\">Anote estas credenciais. A senha não será exibida novamente.</p>"
+              "</div>"
+              if generated_password else ""
+          )}
+          <p>Você já pode fechar esta janela e retornar ao sistema.</p>
+          <script>
+            setTimeout(function() {{
+              window.close();
+            }}, 2500);
+          </script>
+        </body>
+        </html>
+        """)
+
+    except Exception as exc:
+        conn.rollback()
+
+        return HTMLResponse(f"""
+        <html>
+        <body style="font-family:Arial;background:#020617;color:white;padding:40px">
+          <h1>Erro ao conectar Instagram</h1>
+          <p>{str(exc)}</p>
+        </body>
+        </html>
+        """)
+
+    finally:
+        conn.close()
 
 
 @app.get("/api/facebook-login/callback")
@@ -2448,18 +3538,31 @@ def api_facebook_login_callback(code: str = "", state: str = "", error: str = ""
         conn.close()
 
 @app.get("/api/meta-connected/accounts")
-def api_meta_connected_accounts():
+def api_meta_connected_accounts(request: Request):
     _ensure_meta_client_tables()
+
+    current_user = _vertice_current_user(request)
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Sessão inválida.")
 
     db = _meta_client_db_path()
     conn = sqlite3.connect(db)
     conn.row_factory = sqlite3.Row
 
     try:
-        rows = conn.execute("""
-            SELECT * FROM meta_connected_accounts
-             ORDER BY updated_at DESC, id DESC
-        """).fetchall()
+        if current_user["role"] == "admin":
+            rows = conn.execute(
+                "SELECT * FROM meta_connected_accounts ORDER BY updated_at DESC, id DESC"
+            ).fetchall()
+        else:
+            account_id = current_user.get("meta_account_id")
+            if not account_id:
+                rows = []
+            else:
+                rows = conn.execute(
+                    "SELECT * FROM meta_connected_accounts WHERE id = ? ORDER BY updated_at DESC, id DESC",
+                    (account_id,)
+                ).fetchall()
 
         return {
             "status": "sucesso",
@@ -2468,6 +3571,7 @@ def api_meta_connected_accounts():
 
     finally:
         conn.close()
+
 
 def _parse_insights_response(data):
     out = {}
@@ -2511,7 +3615,35 @@ def _connected_client_strategy(account, posts):
             int(p.get("like_count") or 0)
         )
 
-    ranked = sorted(posts, key=score, reverse=True)
+    avg_reach = (
+        total_reach / len(posts)
+        if posts
+        else 0
+    )
+
+    avg_engagement = (
+        sum(_n(p.get("engagement_rate")) for p in posts) / len(posts)
+        if posts
+        else 0
+    )
+
+    avg_share_rate = (
+        sum(_rate(_n(p.get("shares")), _n(p.get("reach"))) for p in posts) / len(posts)
+        if posts
+        else 0
+    )
+
+    ranked = sorted(
+        posts,
+        key=lambda p: (
+            _n(p.get("potential_score")),
+            _n(p.get("engagement_rate")),
+            _n(p.get("reach")),
+            _n(p.get("shares")),
+            _n(p.get("saved"))
+        ),
+        reverse=True
+    )
 
     top_posts = []
 
@@ -2529,6 +3661,21 @@ def _connected_client_strategy(account, posts):
             "shares": int(p.get("shares") or 0),
             "like_count": int(p.get("like_count") or 0),
             "comments_count": int(p.get("comments_count") or 0),
+            "total_interactions": int(p.get("total_interactions") or 0),
+            "engagement_rate": float(p.get("engagement_rate") or 0),
+            "taxa_salvamento": float(p.get("taxa_salvamento") or 0),
+            "taxa_compartilhamento": float(p.get("taxa_compartilhamento") or 0),
+            "potential_score": float(p.get("potential_score") or 0),
+            "diagnostico": _strategic_diagnostic_for_post(
+                p,
+                avg_reach,
+                avg_engagement,
+                avg_share_rate
+            ),
+            "decisao": _decision_for_post(
+                p,
+                (total_reach / len(posts)) if posts else 0
+            ),
             "score": round(score(p), 2)
         })
 
@@ -2608,9 +3755,52 @@ def _connected_client_strategy(account, posts):
         "top_posts": top_posts
     }
 
+def _instagram_graph_get(path: str, token: str, params: dict | None = None):
+    import requests
+
+    url = f"https://graph.instagram.com/{path.lstrip('/')}"
+
+    final_params = dict(params or {})
+    final_params["access_token"] = token
+
+    resp = requests.get(
+        url,
+        params=final_params,
+        timeout=30
+    )
+
+    try:
+        data = resp.json()
+    except Exception:
+        data = {"raw": resp.text}
+
+    if not resp.ok:
+        raise HTTPException(
+            status_code=resp.status_code,
+            detail={
+                "erro": "Erro na Instagram Graph API.",
+                "meta": data
+            }
+        )
+
+    return data
+
+
 @app.get("/api/meta-connected/accounts/{account_id}/insights")
-def api_meta_connected_account_insights(account_id: int, limit: int = 25):
+def api_meta_connected_account_insights(account_id: int, limit: int = 25, request: Request = None):
     _ensure_meta_client_tables()
+
+    current_user = _vertice_current_user(request)
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Sessão inválida.")
+
+    if current_user["role"] != "admin":
+        linked_account_id = current_user.get("meta_account_id")
+        if not linked_account_id or int(linked_account_id) != int(account_id):
+            raise HTTPException(
+                status_code=403,
+                detail="Acesso negado à conta solicitada."
+            )
 
     try:
         limit = int(limit or 25)
@@ -2633,16 +3823,45 @@ def api_meta_connected_account_insights(account_id: int, limit: int = 25):
             raise HTTPException(status_code=404, detail="Conta conectada não encontrada.")
 
         account = dict(row)
-        token = account.get("page_access_token")
         ig_user_id = account.get("ig_user_id")
 
-        if not token or not ig_user_id:
-            raise HTTPException(status_code=400, detail="Conta conectada sem token ou Instagram ID.")
+        raw_payload = {}
+        try:
+            raw_payload = json.loads(account.get("raw_payload") or "{}")
+        except Exception:
+            raw_payload = {}
 
-        media = _meta_graph_get(f"{ig_user_id}/media", token, {
-            "fields": "id,caption,media_type,permalink,timestamp,like_count,comments_count",
-            "limit": limit
-        })
+        is_instagram_login = (
+            raw_payload.get("login_type") == "instagram_login"
+        )
+
+        if is_instagram_login:
+            token = account.get("user_access_token")
+
+            if not token or not ig_user_id:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Conta Instagram Login sem token ou Instagram ID."
+                )
+
+            media = _instagram_graph_get("me/media", token, {
+                "fields": "id,caption,media_type,permalink,timestamp,like_count,comments_count",
+                "limit": limit
+            })
+
+        else:
+            token = account.get("page_access_token")
+
+            if not token or not ig_user_id:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Conta conectada sem token ou Instagram ID."
+                )
+
+            media = _meta_graph_get(f"{ig_user_id}/media", token, {
+                "fields": "id,caption,media_type,permalink,timestamp,like_count,comments_count",
+                "limit": limit
+            })
 
         posts = []
 
@@ -2650,6 +3869,7 @@ def api_meta_connected_account_insights(account_id: int, limit: int = 25):
             insights = {}
 
             metric_sets = [
+                "reach,saved,shares,total_interactions,views",
                 "reach,saved,shares,total_interactions",
                 "reach,saved,total_interactions",
                 "reach"
@@ -2657,13 +3877,90 @@ def api_meta_connected_account_insights(account_id: int, limit: int = 25):
 
             for metrics in metric_sets:
                 try:
-                    raw = _meta_graph_get(f"{m.get('id')}/insights", token, {
-                        "metric": metrics
-                    })
+                    if is_instagram_login:
+                        raw = _instagram_graph_get(
+                            f"{m.get('id')}/insights",
+                            token,
+                            {"metric": metrics}
+                        )
+                    else:
+                        raw = _meta_graph_get(
+                            f"{m.get('id')}/insights",
+                            token,
+                            {"metric": metrics}
+                        )
                     insights = _parse_insights_response(raw)
                     break
                 except Exception:
                     insights = {}
+
+            # ========================================================
+            # CÁLCULOS ESTRATÉGICOS DO POST
+            # ========================================================
+
+            reach_value = int(
+                insights.get("reach") or 0
+            )
+
+            views_value = int(
+                insights.get("views") or 0
+            )
+
+            saved_value = int(
+                insights.get("saved") or 0
+            )
+
+            shares_value = int(
+                insights.get("shares") or 0
+            )
+
+            likes_value = int(
+                m.get("like_count") or 0
+            )
+
+            comments_value = int(
+                m.get("comments_count") or 0
+            )
+
+            interactions_value = int(
+                insights.get("total_interactions")
+                or (
+                    likes_value
+                    + comments_value
+                    + saved_value
+                    + shares_value
+                )
+            )
+
+            engagement_rate = (
+                round(
+                    (interactions_value / reach_value) * 100,
+                    2
+                )
+                if reach_value > 0
+                else 0
+            )
+
+            save_rate = (
+                (saved_value / reach_value) * 100
+                if reach_value > 0
+                else 0
+            )
+
+            share_rate = (
+                (shares_value / reach_value) * 100
+                if reach_value > 0
+                else 0
+            )
+
+            # Score estratégico de 0 a 100
+            potential_score = round(
+                min(40, engagement_rate * 10)
+                + min(25, save_rate * 25)
+                + min(25, share_rate * 20)
+                + min(10, comments_value),
+                2
+            )
 
             posts.append({
                 "id": m.get("id"),
@@ -2671,12 +3968,29 @@ def api_meta_connected_account_insights(account_id: int, limit: int = 25):
                 "media_type": m.get("media_type") or "",
                 "permalink": m.get("permalink") or "",
                 "timestamp": m.get("timestamp") or "",
-                "like_count": int(m.get("like_count") or 0),
-                "comments_count": int(m.get("comments_count") or 0),
-                "reach": int(insights.get("reach") or 0),
-                "saved": int(insights.get("saved") or 0),
-                "shares": int(insights.get("shares") or 0),
-                "total_interactions": int(insights.get("total_interactions") or 0),
+
+                "like_count": likes_value,
+                "comments_count": comments_value,
+                "reach": reach_value,
+                "views": views_value,
+                "saved": saved_value,
+                "shares": shares_value,
+                "total_interactions": interactions_value,
+
+                "engagement_rate": engagement_rate,
+
+                "taxa_salvamento": round(
+                    save_rate,
+                    2
+                ),
+
+                "taxa_compartilhamento": round(
+                    share_rate,
+                    2
+                ),
+
+                "potential_score": potential_score,
+
                 "insights": insights
             })
 
@@ -4304,6 +5618,8 @@ def _ensure_meta_token_columns():
         cols = {c[1] for c in existing}
 
         add_cols = {
+            "instagram_business_account_id": "TEXT",
+            "instagram_username": "TEXT",
             "long_lived_user_token": "TEXT",
             "page_token_status": "TEXT",
             "token_expires_in": "INTEGER",
@@ -4314,6 +5630,27 @@ def _ensure_meta_token_columns():
         for col, typ in add_cols.items():
             if col not in cols:
                 conn.execute(f"ALTER TABLE meta_connected_accounts ADD COLUMN {col} {typ}")
+
+        # Preserva os dados existentes e preenche os campos equivalentes.
+        cols = {
+            c[1] for c in conn.execute(
+                "PRAGMA table_info(meta_connected_accounts)"
+            ).fetchall()
+        }
+
+        if "ig_user_id" in cols:
+            conn.execute("""
+                UPDATE meta_connected_accounts
+                SET instagram_business_account_id =
+                    COALESCE(NULLIF(instagram_business_account_id, ''), ig_user_id)
+            """)
+
+        if "ig_username" in cols:
+            conn.execute("""
+                UPDATE meta_connected_accounts
+                SET instagram_username =
+                    COALESCE(NULLIF(instagram_username, ''), ig_username)
+            """)
 
         conn.commit()
     finally:
@@ -4664,6 +6001,7 @@ def _aq_get_db_path():
 def _aq_get_connected_accounts():
     import sqlite3
 
+    _ensure_meta_token_columns()
     _ensure_acompanhamento_quinzenal_tables()
 
     db_path = _aq_get_db_path()
@@ -4703,6 +6041,7 @@ def _aq_get_connected_accounts():
 def _aq_get_connected_account(account_id=None):
     import sqlite3
 
+    _ensure_meta_token_columns()
     db_path = _aq_get_db_path()
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
@@ -4728,11 +6067,27 @@ def _aq_get_connected_account(account_id=None):
 
         account = dict(row)
 
-        if not account.get("page_access_token"):
-            raise HTTPException(status_code=400, detail="Conta sem Page Access Token salvo. Reconecte a Meta.")
+        try:
+            raw_payload = json.loads(account.get("raw_payload") or "{}")
+        except Exception:
+            raw_payload = {}
 
-        if not account.get("instagram_business_account_id"):
-            raise HTTPException(status_code=400, detail="Conta sem Instagram Business Account ID. Reconecte a Meta.")
+        instagram_login = raw_payload.get("login_type") == "instagram_login"
+        account["_instagram_login"] = instagram_login
+
+        token = (
+            account.get("user_access_token")
+            if instagram_login
+            else account.get("page_access_token")
+        )
+        if not token:
+            raise HTTPException(
+                status_code=400,
+                detail="Conta sem token de acesso para o tipo de conexão salvo."
+            )
+
+        if not (account.get("instagram_business_account_id") or account.get("ig_user_id")):
+            raise HTTPException(status_code=400, detail="Conta sem Instagram ID. Reconecte a conta.")
 
         return account
 
@@ -4770,13 +6125,17 @@ def _aq_get_metric(metrics_map, name):
     return int(value or 0)
 
 
-def _aq_fetch_basic_account(ig_id, token):
+def _aq_fetch_basic_account(ig_id, token, instagram_login=False):
+    if instagram_login:
+        return _instagram_graph_get("me", token, {
+            "fields": "user_id,username,followers_count,media_count"
+        })
     return _meta_graph_get(ig_id, token, {
         "fields": "id,username,followers_count,media_count"
     })
 
 
-def _aq_fetch_insights(ig_id, token, since, until):
+def _aq_fetch_insights(ig_id, token, since, until, instagram_login=False):
     """
     Algumas métricas podem variar conforme tipo da conta, permissão e versão da API.
     Por isso tentamos primeiro um conjunto amplo e depois fazemos fallback seguro.
@@ -4792,12 +6151,15 @@ def _aq_fetch_insights(ig_id, token, since, until):
 
     for metrics in attempts:
         try:
-            return _meta_graph_get(f"{ig_id}/insights", token, {
+            path = "me/insights" if instagram_login else f"{ig_id}/insights"
+            client = _instagram_graph_get if instagram_login else _meta_graph_get
+            params = {
                 "metric": metrics,
                 "period": "day",
                 "since": since,
                 "until": until
-            })
+            }
+            return client(path, token, params)
         except Exception as e:
             last_error = str(e)
 
@@ -4808,12 +6170,18 @@ def _aq_fetch_insights(ig_id, token, since, until):
     }
 
 
-def _aq_fetch_media(ig_id, token, since, until):
+def _aq_fetch_media(ig_id, token, since, until, instagram_login=False):
     try:
-        data = _meta_graph_get(f"{ig_id}/media", token, {
-            "fields": "id,caption,media_type,timestamp,like_count,comments_count,permalink",
-            "limit": 100
-        })
+        if instagram_login:
+            data = _instagram_graph_get("me/media", token, {
+                "fields": "id,caption,media_type,timestamp,like_count,comments_count,permalink",
+                "limit": 100
+            })
+        else:
+            data = _meta_graph_get(f"{ig_id}/media", token, {
+                "fields": "id,caption,media_type,timestamp,like_count,comments_count,permalink",
+                "limit": 100
+            })
     except Exception:
         return []
 
@@ -4952,12 +6320,21 @@ def api_acompanhamento_quinzenal_snapshot(payload: dict):
 
     account = _aq_get_connected_account(account_id)
 
-    token = account.get("page_access_token")
-    ig_id = account.get("instagram_business_account_id")
+    instagram_login = bool(account.get("_instagram_login"))
+    token = (
+        account.get("user_access_token")
+        if instagram_login
+        else account.get("page_access_token")
+    )
+    ig_id = account.get("instagram_business_account_id") or account.get("ig_user_id")
 
-    basic = _aq_fetch_basic_account(ig_id, token)
-    insights = _aq_fetch_insights(ig_id, token, period_start, period_end)
-    posts = _aq_fetch_media(ig_id, token, period_start, period_end)
+    basic = _aq_fetch_basic_account(ig_id, token, instagram_login)
+    insights = _aq_fetch_insights(
+        ig_id, token, period_start, period_end, instagram_login
+    )
+    posts = _aq_fetch_media(
+        ig_id, token, period_start, period_end, instagram_login
+    )
 
     metrics_map = {}
 
