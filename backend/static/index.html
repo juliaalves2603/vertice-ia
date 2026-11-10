@@ -1129,6 +1129,49 @@ function renderMetricasCliente(){
   const d = kpis();
   const accountName = state.account?.instagram_account?.username || currentUser?.username || "sua conta";
 
+  const topReach = [...state.posts]
+    .sort((a,b)=>(Number(b.reach)||0)-(Number(a.reach)||0))
+    .slice(0,5);
+
+  const topInteractions = [...state.posts]
+    .sort((a,b)=>
+      ((Number(b.like_count)||0)+(Number(b.comments_count)||0)+(Number(b.saved)||0)+(Number(b.shares)||0)) -
+      ((Number(a.like_count)||0)+(Number(a.comments_count)||0)+(Number(a.saved)||0)+(Number(a.shares)||0))
+    )
+    .slice(0,5);
+
+  const chartBlock = (title, description, rows, metric) => {
+    const max = Math.max(1, ...rows.map(p => Number(metric(p)) || 0));
+
+    return `
+      <div class="card">
+        <div class="eyebrow">Análise visual</div>
+        <h2>${title}</h2>
+        <p class="muted">${description}</p>
+        ${rows.length ? rows.map((p,i) => {
+          const value = Number(metric(p)) || 0;
+          const width = Math.max(value > 0 ? 2 : 0, (value / max) * 100);
+
+          return `
+            <div style="margin:18px 0">
+              <div class="between" style="gap:12px">
+                <span style="font-size:13px">${i+1}. ${safe(short(p.caption || p.media_type || "Publicação", 48))}</span>
+                <strong>${fmt(value)}</strong>
+              </div>
+              <div style="height:12px;background:var(--line,#292929);border-radius:20px;overflow:hidden;margin-top:7px">
+                <div style="height:100%;width:${width}%;background:#c5a15b;border-radius:20px"></div>
+              </div>
+            </div>
+          `;
+        }).join("") : `
+          <div class="empty">Ainda não há publicações para gerar este gráfico.</div>
+        `}
+      </div>
+    `;
+  };
+
+  const totalInteractions = d.likes + d.comments + d.saved + d.shares;
+
   $("metricas").innerHTML = `
     <div class="card gold">
       <div class="between">
@@ -1170,6 +1213,47 @@ function renderMetricasCliente(){
         <strong>${fmt(d.shares)}</strong>
         <div class="hint">Identificação do público</div>
       </div>
+    </div>
+
+    <br>
+
+    <div class="grid mainSplit">
+      ${chartBlock(
+        "Alcance por publicação",
+        "Mostra quais publicações foram exibidas para mais pessoas. Alcance indica visibilidade, não necessariamente interesse ou conversão.",
+        topReach,
+        p => p.reach
+      )}
+      ${chartBlock(
+        "Interações por publicação",
+        "Soma curtidas, comentários, salvamentos e compartilhamentos. Ajuda a identificar quais conteúdos despertaram mais participação.",
+        topInteractions,
+        p => (Number(p.like_count)||0) + (Number(p.comments_count)||0) + (Number(p.saved)||0) + (Number(p.shares)||0)
+      )}
+    </div>
+
+    <div class="card">
+      <div class="eyebrow">Leitura dos indicadores</div>
+      <h2>O que esses números mostram?</h2>
+      <div class="grid four">
+        <div>
+          <strong>Alcance</strong>
+          <p class="muted">Quantas contas foram alcançadas pelas publicações. Indica visibilidade.</p>
+        </div>
+        <div>
+          <strong>Salvamentos</strong>
+          <p class="muted">Conteúdos que o público quis guardar para consultar novamente.</p>
+        </div>
+        <div>
+          <strong>Compartilhamentos</strong>
+          <p class="muted">Conteúdos que as pessoas decidiram enviar para outras pessoas.</p>
+        </div>
+        <div>
+          <strong>Interações</strong>
+          <p class="muted">Participação do público por curtidas, comentários, salvamentos e compartilhamentos.</p>
+        </div>
+      </div>
+      <p class="muted">Total de interações nas publicações analisadas: <strong>${fmt(totalInteractions)}</strong>.</p>
     </div>
 
     <br>
