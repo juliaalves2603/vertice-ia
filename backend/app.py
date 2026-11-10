@@ -1,3 +1,6 @@
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 
 from fastapi import FastAPI
@@ -723,7 +726,7 @@ async def vertice_visual_login_middleware(request: Request, call_next):
     return RedirectResponse("/login")
 
 
-@app.get("/api/session-check")
+@app.api_route("/api/session-check", methods=["GET", "HEAD"])
 def api_session_check(request: Request):
     user = _vertice_current_user(request)
     return {
