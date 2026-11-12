@@ -6933,6 +6933,125 @@ ACOMPANHAMENTO_QUINZENAL_HTML = r"""
     .negative{color:#fca5a5!important}
     .neutral{color:#facc15!important}
     a{color:#f5c451}
+
+    /* VÉRTICE IA — BUSINESS INTELLIGENCE */
+    .bi-dashboard{margin-top:22px}
+    .bi-heading{
+      display:flex;justify-content:space-between;align-items:center;
+      gap:15px;flex-wrap:wrap;margin-bottom:18px
+    }
+    .bi-heading h2{font-size:24px;margin:0;color:#f8fafc}
+    .bi-subtitle{color:#94a3b8;font-size:13px;margin-top:6px}
+    .bi-live{
+      display:inline-flex;align-items:center;gap:8px;
+      border:1px solid rgba(34,197,94,.25);
+      background:rgba(34,197,94,.08);color:#86efac;
+      border-radius:30px;padding:8px 12px;font-size:11px;font-weight:800
+    }
+    .bi-dot{width:7px;height:7px;border-radius:50%;background:#4ade80}
+    .bi-kpis{
+      display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px
+    }
+    .bi-kpi{
+      position:relative;overflow:hidden;
+      border:1px solid rgba(148,163,184,.15);
+      border-radius:19px;padding:19px;
+      background:linear-gradient(145deg,#142139,#0c1527);
+      min-height:132px
+    }
+    .bi-kpi:after{
+      content:"";position:absolute;width:100px;height:100px;
+      right:-35px;top:-40px;border-radius:50%;
+      background:rgba(245,196,81,.055)
+    }
+    .bi-kpi-label{
+      color:#9aaac0;font-size:11px;font-weight:800;
+      letter-spacing:1px;text-transform:uppercase
+    }
+    .bi-kpi-value{font-size:30px;font-weight:900;color:#fff;margin-top:13px}
+    .bi-kpi-foot{font-size:12px;color:#a8b4c7;margin-top:8px}
+    .bi-positive{color:#86efac!important}
+    .bi-negative{color:#fca5a5!important}
+    .bi-neutral{color:#f5c451!important}
+    .bi-layout{
+      display:grid;grid-template-columns:1.45fr 1fr;gap:16px;margin-top:16px
+    }
+    .bi-panel{
+      min-width:0;border:1px solid rgba(148,163,184,.15);
+      border-radius:21px;padding:21px;
+      background:linear-gradient(145deg,#111d31,#0b1425);
+      box-shadow:0 14px 35px rgba(0,0,0,.13)
+    }
+    .bi-panel h3{font-size:16px;margin:0;color:#f8fafc}
+    .bi-panel-desc{font-size:12px;color:#8fa0b7;margin:7px 0 20px}
+    .bi-legend{display:flex;gap:17px;flex-wrap:wrap;margin-top:18px}
+    .bi-legend span{font-size:11px;color:#a8b4c7}
+    .bi-key{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px}
+    .bi-bars{display:grid;gap:18px}
+    .bi-bar-row{display:grid;grid-template-columns:115px 1fr;gap:12px;align-items:center}
+    .bi-bar-name{font-size:12px;color:#b8c5d8}
+    .bi-bar-stack{display:grid;gap:5px}
+    .bi-bar-track{height:10px;background:#26354c;border-radius:20px;overflow:hidden}
+    .bi-bar-fill{height:100%;border-radius:20px;min-width:0}
+    .bi-bar-current{background:linear-gradient(90deg,#d3a43e,#f5d477)}
+    .bi-bar-previous{background:#64748b}
+    .bi-bar-value{font-size:10px;color:#9aabc1;margin-top:2px}
+    .bi-engagement{
+      display:flex;align-items:center;gap:24px;flex-wrap:wrap
+    }
+    .bi-donut{
+      width:150px;height:150px;border-radius:50%;
+      display:grid;place-items:center;flex-shrink:0;
+      background:conic-gradient(#f5c451 0deg,#d6a53e 90deg,#7194c8 180deg,#56b6a5 270deg,#f5c451 360deg);
+      position:relative
+    }
+    .bi-donut:after{
+      content:"";position:absolute;inset:18px;border-radius:50%;background:#111d31
+    }
+    .bi-donut-center{position:relative;z-index:1;text-align:center}
+    .bi-donut-center strong{display:block;color:#fff;font-size:21px}
+    .bi-donut-center small{font-size:10px;color:#9aabc1}
+    .bi-breakdown{display:grid;gap:12px;flex:1;min-width:140px}
+    .bi-break-row{display:flex;justify-content:space-between;gap:10px;font-size:12px}
+    .bi-break-row span{color:#a8b4c7}
+    .bi-break-row strong{color:#fff}
+    .bi-content-list{display:grid;gap:10px}
+    .bi-content-item{
+      padding:13px;border:1px solid rgba(148,163,184,.12);
+      border-radius:13px;background:rgba(2,6,23,.25)
+    }
+    .bi-content-top{display:flex;justify-content:space-between;gap:10px}
+    .bi-content-rank{color:#f5c451;font-weight:900;font-size:12px}
+    .bi-content-score{color:#fff;font-weight:800;font-size:12px}
+    .bi-content-caption{
+      color:#a8b4c7;font-size:12px;line-height:1.5;
+      margin-top:7px;overflow-wrap:anywhere
+    }
+    .bi-analysis{display:grid;gap:10px}
+    .bi-analysis-item{
+      padding:12px 14px;border-radius:12px;
+      border-left:3px solid #d6a53e;
+      background:rgba(245,196,81,.055);
+      color:#d7e0ed;font-size:13px;line-height:1.6
+    }
+    .bi-empty{
+      padding:18px;border:1px dashed rgba(148,163,184,.22);
+      border-radius:14px;color:#94a3b8;font-size:13px;line-height:1.6
+    }
+    .bi-filter-note{color:#8fa0b7;font-size:11px;margin-top:15px}
+    .legacy-hidden{display:none!important}
+    @media(max-width:900px){
+      .bi-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .bi-layout{grid-template-columns:1fr}
+    }
+    @media(max-width:520px){
+      .bi-kpis{grid-template-columns:1fr 1fr;gap:8px}
+      .bi-kpi{padding:13px;min-height:112px}
+      .bi-kpi-value{font-size:23px}
+      .bi-bar-row{grid-template-columns:88px 1fr}
+      .bi-donut{width:125px;height:125px}
+    }
+
     @media(max-width:900px){
       .hero,.brand{flex-direction:column;align-items:flex-start}
       .grid{grid-template-columns:1fr}
@@ -6978,9 +7097,71 @@ ACOMPANHAMENTO_QUINZENAL_HTML = r"""
         <button onclick="gerarSnapshot()">Gerar análise quinzenal</button>
         <button class="ghost" onclick="carregarHistorico()">Atualizar histórico</button>
         <button class="ghost" onclick="compararQuinzenas()">Comparar últimas quinzenas</button>
+        <button onclick="exportarDashboardPNG()">Gerar dashboard em PNG</button>
       </div>
       <div id="status" class="status">Carregando contas conectadas...</div>
     </section>
+
+
+    <section id="biDashboard" class="bi-dashboard">
+      <div class="bi-heading">
+        <div>
+          <div class="eyebrow">Business intelligence</div>
+          <h2>Painel de desempenho</h2>
+          <div id="biPeriod" class="bi-subtitle">Aguardando dados do acompanhamento</div>
+        </div>
+        <div class="bi-live"><span class="bi-dot"></span> DADOS DA META</div>
+      </div>
+
+      <div id="biKpis" class="bi-kpis">
+        <div class="bi-empty">Gere ou selecione um acompanhamento para visualizar os indicadores.</div>
+      </div>
+
+      <div class="bi-layout">
+        <div class="bi-panel">
+          <h3>Comparativo de desempenho</h3>
+          <div class="bi-panel-desc">Período atual versus período anterior</div>
+          <div id="biTrend" class="bi-bars">
+            <div class="bi-empty">A comparação aparecerá quando houver dois acompanhamentos.</div>
+          </div>
+          <div class="bi-legend">
+            <span><i class="bi-key" style="background:#f5c451"></i>Atual</span>
+            <span><i class="bi-key" style="background:#64748b"></i>Anterior</span>
+          </div>
+        </div>
+
+        <div class="bi-panel">
+          <h3>Composição das interações</h3>
+          <div class="bi-panel-desc">Distribuição por tipo de interação</div>
+          <div id="biEngagement">
+            <div class="bi-empty">Aguardando métricas de interação.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bi-layout">
+        <div class="bi-panel">
+          <h3>Conteúdos em destaque</h3>
+          <div class="bi-panel-desc">Publicações com maior soma de curtidas e comentários</div>
+          <div id="biContent" class="bi-content-list">
+            <div class="bi-empty">Os conteúdos serão exibidos quando estiverem disponíveis nos dados capturados.</div>
+          </div>
+        </div>
+
+        <div class="bi-panel">
+          <h3>Leitura estratégica</h3>
+          <div class="bi-panel-desc">Pontos de atenção identificados no acompanhamento</div>
+          <div id="biAnalysis" class="bi-analysis">
+            <div class="bi-empty">A análise será apresentada após gerar o acompanhamento.</div>
+          </div>
+        </div>
+      </div>
+      <div class="bi-filter-note">
+        Indicadores baseados nos dados retornados pela Meta. Comparações dependem da existência de dois snapshots.
+      </div>
+    </section>
+
+    <div class="legacy-hidden">
 
     <section class="grid">
       <div class="card"><small>Contas alcançadas</small><strong id="mReach">-</strong></div>
@@ -6989,7 +7170,7 @@ ACOMPANHAMENTO_QUINZENAL_HTML = r"""
       <div class="card"><small>Posts no período</small><strong id="mPosts">-</strong></div>
     </section>
 
-    <section class="two">
+    <section class="two legacy-hidden">
       <div class="panel">
         <div class="eyebrow">Diagnóstico</div>
         <h2 style="margin-top:0;">Análise estratégica</h2>
@@ -7003,6 +7184,8 @@ ACOMPANHAMENTO_QUINZENAL_HTML = r"""
       </div>
     </section>
 
+    </div>
+
     <section class="panel">
       <div class="eyebrow">Histórico salvo</div>
       <h2 style="margin-top:0;">Acompanhamentos quinzenais</h2>
@@ -7012,6 +7195,8 @@ ACOMPANHAMENTO_QUINZENAL_HTML = r"""
 
 <script>
 function $(id){ return document.getElementById(id); }
+let latestSnapshot = null;
+let latestComparison = null;
 
 function setStatus(msg, ok){
   const el = $("status");
@@ -7032,6 +7217,627 @@ function pctLabel(value){
   const sign = value > 0 ? "+" : "";
   return `<b class="${cls}">${sign}${value}%</b>`;
 }
+
+
+function reportNumber(value){
+  const n = Number(value || 0);
+  return Number.isFinite(n) ? n.toLocaleString("pt-BR") : "-";
+}
+
+function reportPercent(value){
+  if(value === null || value === undefined) return "Sem base anterior";
+  const n = Number(value);
+  return (n > 0 ? "+" : "") + n.toLocaleString("pt-BR", {
+    maximumFractionDigits: 1
+  }) + "%";
+}
+
+function reportDate(value){
+  if(!value) return "-";
+  const parts = String(value).split("-");
+  return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : value;
+}
+
+function reportWrap(ctx, text, x, y, maxWidth, lineHeight, maxLines=20){
+  const words = String(text || "").split(/\s+/);
+  let line = "";
+  let lines = 0;
+
+  for(const word of words){
+    const test = line ? line + " " + word : word;
+    if(ctx.measureText(test).width > maxWidth && line){
+      ctx.fillText(line, x, y);
+      y += lineHeight;
+      lines++;
+      line = word;
+      if(lines >= maxLines) return y;
+    }else{
+      line = test;
+    }
+  }
+
+  if(line && lines < maxLines){
+    ctx.fillText(line, x, y);
+    y += lineHeight;
+  }
+  return y;
+}
+
+function reportRounded(ctx, x, y, w, h, radius, fill, stroke){
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, radius);
+  ctx.fillStyle = fill;
+  ctx.fill();
+  if(stroke){
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+}
+
+async function exportarDashboardPNG(){
+  const snapshot = latestSnapshot;
+  if(!snapshot){
+    setStatus("Gere um acompanhamento antes de exportar o dashboard.", false);
+    return;
+  }
+
+  const current = snapshot.current || snapshot;
+  const comparison = latestComparison?.comparison || {};
+  const client = snapshot.client_name || current.client_name ||
+    $("clientName").value || "Cliente";
+  const username = snapshot.instagram_username ||
+    current.instagram_username || biSelectedUsername();
+  const start = snapshot.period_start || current.period_start || "";
+  const end = snapshot.period_end || current.period_end || "";
+
+  const posts = (snapshot.raw_posts || snapshot.current?.posts || [])
+    .map(post => ({
+      post,
+      score: Number(post.like_count || 0) +
+        Number(post.comments_count || 0)
+    }))
+    .sort((a,b) => b.score-a.score)
+    .slice(0,5);
+
+  const analysis = String(
+    snapshot.strategic_analysis ||
+    snapshot.current_analysis ||
+    current.strategic_analysis || ""
+  );
+
+  const canvas = document.createElement("canvas");
+  canvas.width = 1600;
+  canvas.height = 2900;
+
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width;
+  const gold = "#f5c451";
+  const white = "#f8fafc";
+  const muted = "#a8b4c7";
+  const navy = "#080d19";
+  const panel = "#111c30";
+  const green = "#72dda0";
+  const red = "#ff9292";
+  const colors = ["#f5c451","#d6a53e","#7194c8","#56b6a5"];
+
+  ctx.fillStyle = navy;
+  ctx.fillRect(0,0,W,canvas.height);
+
+  const glow = ctx.createRadialGradient(1350,80,20,1350,80,700);
+  glow.addColorStop(0,"rgba(245,196,81,.18)");
+  glow.addColorStop(1,"rgba(245,196,81,0)");
+  ctx.fillStyle = glow;
+  ctx.fillRect(0,0,W,700);
+
+  const rounded = (x,y,w,h,fill) =>
+    reportRounded(ctx,x,y,w,h,24,fill,"#29364d");
+
+  const text = (value,x,y,size=22,color=white,bold=false) => {
+    ctx.fillStyle = color;
+    ctx.font = `${bold ? "bold " : ""}${size}px Arial`;
+    ctx.fillText(String(value ?? ""),x,y);
+  };
+
+  const wrap = (value,x,y,maxWidth,lineHeight,size=20,color=white,bold=false,maxLines=4) => {
+    ctx.font = `${bold ? "bold " : ""}${size}px Arial`;
+    ctx.fillStyle = color;
+    const words = String(value ?? "").split(/\s+/);
+    let line = "";
+    let lines = 0;
+
+    for(const word of words){
+      const test = line ? line + " " + word : word;
+      if(ctx.measureText(test).width > maxWidth && line){
+        if(lines >= maxLines-1){
+          ctx.fillText(line + "…",x,y);
+          return y + lineHeight;
+        }
+        ctx.fillText(line,x,y);
+        y += lineHeight;
+        lines++;
+        line = word;
+      }else{
+        line = test;
+      }
+    }
+    if(line && lines < maxLines) ctx.fillText(line,x,y);
+    return y + lineHeight;
+  };
+
+  let logo = null;
+  try{
+    logo = new Image();
+    logo.src = "/static/assets/logo-vertice-ia.png";
+    await new Promise((resolve,reject)=>{
+      logo.onload = resolve;
+      logo.onerror = reject;
+    });
+  }catch(e){
+    logo = null;
+  }
+
+  if(logo){
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.roundRect(80,65,112,112,20);
+    ctx.fill();
+    ctx.drawImage(logo,92,77,88,88);
+  }
+
+  text("VÉRTICE IA  |  INTELIGÊNCIA E POSICIONAMENTO DIGITAL",
+    225,100,22,gold,true);
+  text("PAINEL DE DESEMPENHO",80,250,54,white,true);
+  text(String(client).slice(0,48),80,325,36,white,true);
+  text(
+    (username ? "@"+username+"  •  " : "")+
+    reportDate(start)+" até "+reportDate(end),
+    80,375,24,muted
+  );
+
+  // Indicadores
+  rounded(80,425,1440,390,panel);
+  text("INDICADORES DO PERÍODO",120,480,25,gold,true);
+
+  const metrics = [
+    ["CONTAS ALCANÇADAS",current.reach],
+    ["VISUALIZAÇÕES",current.impressions],
+    ["INTERAÇÕES",current.total_interactions],
+    ["SEGUIDORES",current.followers_count],
+    ["VISITAS AO PERFIL",current.profile_views],
+    ["CLIQUES NO SITE",current.website_clicks],
+    ["PUBLICAÇÕES",current.posts_count],
+    ["SALVAMENTOS",current.saves]
+  ];
+
+  metrics.forEach((item,i)=>{
+    const col = i%4;
+    const row = Math.floor(i/4);
+    const x = 120+col*350;
+    const y = 550+row*145;
+    text(item[0],x,y,17,muted,true);
+    text(reportNumber(item[1]),x,y+55,38,white,true);
+  });
+
+  // Evolução por métrica
+  rounded(80,850,1440,570,panel);
+  text("COMPARATIVO DE DESEMPENHO",120,910,25,gold,true);
+  text("Período atual versus período anterior",120,950,18,muted);
+
+  const compareMetrics = [
+    ["Alcance","reach"],
+    ["Visualizações","impressions"],
+    ["Interações","total_interactions"],
+    ["Visitas ao perfil","profile_views"],
+    ["Seguidores","followers_count"],
+    ["Publicações","posts_count"]
+  ];
+
+  compareMetrics.forEach(([label,key],i)=>{
+    const col = i%2;
+    const row = Math.floor(i/2);
+    const x = 120+col*700;
+    const y = 1010+row*125;
+    const item = comparison[key] || {};
+    const oldValue = Number(item.previous || 0);
+    const newValue = Number(item.current ?? current[key] ?? 0);
+    const max = Math.max(1,oldValue,newValue);
+    const percent = item.percent;
+
+    text(label,x,y,19,white,true);
+
+    ctx.fillStyle = "#26354c";
+    ctx.beginPath();
+    ctx.roundRect(x,y+18,570,13,7);
+    ctx.fill();
+
+    ctx.fillStyle = gold;
+    ctx.beginPath();
+    ctx.roundRect(x,y+18,570*newValue/max,13,7);
+    ctx.fill();
+
+    ctx.fillStyle = "#64748b";
+    ctx.beginPath();
+    ctx.roundRect(x,y+39,570*oldValue/max,9,5);
+    ctx.fill();
+
+    const deltaColor =
+      percent === null || percent === undefined ? gold :
+      percent > 0 ? green : percent < 0 ? red : gold;
+
+    text(
+      "Atual: "+reportNumber(newValue)+
+      "  |  Anterior: "+reportNumber(oldValue),
+      x,y+70,16,muted
+    );
+    text(
+      percent === null || percent === undefined
+        ? "Sem base anterior" : reportPercent(percent)+" vs. anterior",
+      x,y+96,17,deltaColor,true
+    );
+  });
+
+  // Composição das interações
+  rounded(80,1450,1440,390,panel);
+  text("COMPOSIÇÃO DAS INTERAÇÕES",120,1510,25,gold,true);
+
+  const parts = [
+    ["Curtidas",Number(current.likes||0)],
+    ["Comentários",Number(current.comments||0)],
+    ["Compartilhamentos",Number(current.shares||0)],
+    ["Salvamentos",Number(current.saves||0)]
+  ];
+  const total = parts.reduce((sum,item)=>sum+item[1],0);
+  const cx = 340, cy = 1660, radius = 105;
+
+  if(total > 0){
+    let angle = -Math.PI/2;
+    parts.forEach((item,i)=>{
+      if(item[1] <= 0) return;
+      const next = angle + item[1]/total*Math.PI*2;
+      ctx.beginPath();
+      ctx.arc(cx,cy,radius,angle,next);
+      ctx.arc(cx,cy,65,next,angle,true);
+      ctx.closePath();
+      ctx.fillStyle = colors[i];
+      ctx.fill();
+      angle = next;
+    });
+  }else{
+    ctx.beginPath();
+    ctx.arc(cx,cy,radius,0,Math.PI*2);
+    ctx.strokeStyle = "#26354c";
+    ctx.lineWidth = 35;
+    ctx.stroke();
+  }
+
+  text(reportNumber(total),cx-30,cy+8,29,white,true);
+
+  parts.forEach((item,i)=>{
+    const y = 1585+i*55;
+    ctx.fillStyle = colors[i];
+    ctx.beginPath();
+    ctx.arc(650,y-7,7,0,Math.PI*2);
+    ctx.fill();
+    text(item[0],675,y,20,muted);
+    text(reportNumber(item[1]),1200,y,20,white,true);
+  });
+
+  // Conteúdos em destaque
+  rounded(80,1870,1440,430,panel);
+  text("CONTEÚDOS EM DESTAQUE",120,1930,25,gold,true);
+  text("Publicações com maior soma de curtidas e comentários",
+    120,1968,18,muted);
+
+  let contentY = 2025;
+  if(posts.length){
+    posts.forEach((item,index)=>{
+      const post = item.post;
+      const caption = String(post.caption || "Publicação sem legenda")
+        .replace(/\s+/g," ").slice(0,190);
+
+      text(
+        "#"+(index+1)+"  DESTAQUE",
+        125,contentY,17,gold,true
+      );
+      text(
+        reportNumber(item.score)+" interações",
+        1120,contentY,17,white,true
+      );
+      contentY = wrap(caption,125,contentY+32,1280,25,17,muted,false,2)+12;
+    });
+  }else{
+    wrap(
+      "Não há publicações disponíveis neste snapshot para montar o ranking.",
+      125,2045,1280,28,19,muted,false,3
+    );
+  }
+
+  // Análise estratégica
+  rounded(80,2330,1440,390,panel);
+  text("LEITURA ESTRATÉGICA",120,2390,25,gold,true);
+
+  const analysisLines = analysis.split(/\n+/)
+    .map(line=>line.trim()).filter(Boolean).slice(0,8);
+
+  let analysisY = 2445;
+  if(analysisLines.length){
+    analysisLines.forEach(line=>{
+      analysisY = wrap(
+        "• "+line.replace(/^[-•]\s*/,""),
+        125,analysisY,1320,27,18,white,false,2
+      )+5;
+    });
+  }else{
+    wrap(
+      "Análise estratégica não disponível para este acompanhamento.",
+      125,2445,1320,28,19,muted,false,3
+    );
+  }
+
+  text(
+    "Relatório gerado pela Vértice IA  •  Dados da conta conectada à Meta",
+    80,2800,17,muted
+  );
+
+  const safeName = String(username || client)
+    .replace(/[^a-z0-9_-]/gi,"-");
+
+  canvas.toBlob(blob=>{
+    if(!blob){
+      setStatus("Não foi possível gerar a imagem PNG.",false);
+      return;
+    }
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "vertice-dashboard-"+safeName+".png";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),30000);
+    setStatus("Dashboard BI exportado em PNG com sucesso.",true);
+  },"image/png");
+}
+function biEsc(value){
+  return String(value ?? "").replace(/[&<>"']/g, ch => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[ch]));
+}
+
+function biSelectedUsername(){
+  const select = $("accountSelect");
+  const label = select?.options[select.selectedIndex]?.textContent || "";
+  const match = label.match(/@([^ —]+)/);
+  return match ? match[1].trim() : "";
+}
+
+function biDelta(metric){
+  if(!latestComparison) return "Sem comparação";
+  const item = latestComparison.comparison?.[metric];
+  if(!item || item.percent === null || item.percent === undefined){
+    return "Sem base anterior";
+  }
+  const n = Number(item.percent);
+  const sign = n > 0 ? "+" : "";
+  return sign + n.toLocaleString("pt-BR",{maximumFractionDigits:1}) + "% vs. anterior";
+}
+
+function biDeltaClass(metric){
+  const value = latestComparison?.comparison?.[metric]?.percent;
+  if(value === null || value === undefined) return "bi-neutral";
+  return value > 0 ? "bi-positive" : value < 0 ? "bi-negative" : "bi-neutral";
+}
+
+function biMetricCard(label, value, metric, hint){
+  return `
+    <article class="bi-kpi">
+      <div class="bi-kpi-label">${biEsc(label)}</div>
+      <div class="bi-kpi-value">${fmt(value)}</div>
+      <div class="bi-kpi-foot ${biDeltaClass(metric)}">
+        ${biEsc(biDelta(metric))}
+      </div>
+    </article>`;
+}
+
+function renderDashboard(){
+  if(!latestSnapshot) return;
+
+  const current = latestSnapshot.current || latestSnapshot;
+  const start = latestSnapshot.period_start || current.period_start || "";
+  const end = latestSnapshot.period_end || current.period_end || "";
+  const client = latestSnapshot.client_name || $("clientName").value || "Cliente";
+
+  $("biPeriod").textContent =
+    client + "  •  @" + (latestSnapshot.instagram_username || biSelectedUsername())
+    + "  •  " + reportDate(start) + " até " + reportDate(end);
+
+  $("biKpis").innerHTML = [
+    biMetricCard("Contas alcançadas",current.reach,"reach"),
+    biMetricCard("Visualizações",current.impressions,"impressions"),
+    biMetricCard("Interações",current.total_interactions,"total_interactions"),
+    biMetricCard("Seguidores",current.followers_count,"followers_count"),
+    biMetricCard("Visitas ao perfil",current.profile_views,"profile_views"),
+    biMetricCard("Cliques no site",current.website_clicks,"website_clicks"),
+    biMetricCard("Publicações",current.posts_count,"posts_count"),
+    biMetricCard("Salvamentos",current.saves,"saves")
+  ].join("");
+
+  renderBiComparison(current);
+  renderBiEngagement(current);
+  renderBiContent();
+  renderBiAnalysis();
+}
+
+function renderBiComparison(current){
+  const metrics = [
+    ["Alcance","reach"],
+    ["Visualizações","impressions"],
+    ["Interações","total_interactions"],
+    ["Visitas ao perfil","profile_views"]
+  ];
+
+  if(!latestComparison){
+    $("biTrend").innerHTML =
+      '<div class="bi-empty">Ainda não existem dois acompanhamentos para comparar. '
+      + 'O comparativo será preenchido após o próximo snapshot.</div>';
+    return;
+  }
+
+  const comparison = latestComparison.comparison || {};
+
+  $("biTrend").innerHTML = metrics.map(([label,key])=>{
+    const item = comparison[key] || {};
+    const oldValue = Number(item.previous || 0);
+    const newValue = Number(item.current ?? current[key] ?? 0);
+    const metricMax = Math.max(1, oldValue, newValue);
+    const oldWidth = oldValue / metricMax * 100;
+    const newWidth = newValue / metricMax * 100;
+
+    return `
+      <div class="bi-bar-row">
+        <div class="bi-bar-name">${label}</div>
+        <div class="bi-bar-stack">
+          <div class="bi-bar-track"><div class="bi-bar-fill bi-bar-current" style="width:${newWidth}%"></div></div>
+          <div class="bi-bar-value">Atual: ${fmt(newValue)}</div>
+          <div class="bi-bar-track"><div class="bi-bar-fill bi-bar-previous" style="width:${oldWidth}%"></div></div>
+          <div class="bi-bar-value">Anterior: ${fmt(oldValue)} · ${biEsc(biDelta(key))}</div>
+        </div>
+      </div>`;
+  }).join("");
+}
+
+function renderBiEngagement(current){
+  const parts = [
+    ["Curtidas",Number(current.likes || 0),"#f5c451"],
+    ["Comentários",Number(current.comments || 0),"#d6a53e"],
+    ["Compartilhamentos",Number(current.shares || 0),"#7194c8"],
+    ["Salvamentos",Number(current.saves || 0),"#56b6a5"]
+  ];
+  const total = parts.reduce((sum,item)=>sum+item[1],0);
+
+  if(total <= 0){
+    $("biEngagement").innerHTML =
+      '<div class="bi-empty">A Meta não retornou dados suficientes para detalhar a composição das interações.</div>';
+    return;
+  }
+
+  let angle = 0;
+  const segments = parts.map(item=>{
+    const start = angle;
+    angle += item[1]/total*360;
+    return `${item[2]} ${start}deg ${angle}deg`;
+  }).join(",");
+
+  $("biEngagement").innerHTML = `
+    <div class="bi-engagement">
+      <div class="bi-donut" style="background:conic-gradient(${segments})">
+        <div class="bi-donut-center">
+          <strong>${fmt(total)}</strong>
+          <small>interações detalhadas</small>
+        </div>
+      </div>
+      <div class="bi-breakdown">
+        ${parts.map(item=>`
+          <div class="bi-break-row">
+            <span><i class="bi-key" style="background:${item[2]}"></i>${item[0]}</span>
+            <strong>${fmt(item[1])}</strong>
+          </div>`).join("")}
+      </div>
+    </div>`;
+}
+
+function renderBiContent(){
+  let posts = latestSnapshot?.raw_posts || [];
+  if(!posts.length && latestSnapshot?.current?.posts){
+    posts = latestSnapshot.current.posts;
+  }
+
+  if(!posts.length){
+    $("biContent").innerHTML =
+      '<div class="bi-empty">Não há publicações disponíveis neste snapshot para montar o ranking.</div>';
+    return;
+  }
+
+  const ranked = posts.map(post=>({
+    post,
+    score:Number(post.like_count || 0)+Number(post.comments_count || 0)
+  })).sort((a,b)=>b.score-a.score).slice(0,5);
+
+  $("biContent").innerHTML = ranked.map((item,index)=>{
+    const caption = String(item.post.caption || "Publicação sem legenda").slice(0,180);
+    const date = item.post.timestamp || item.post.date || "";
+    return `
+      <article class="bi-content-item">
+        <div class="bi-content-top">
+          <span class="bi-content-rank">#${index+1} · DESTAQUE</span>
+          <span class="bi-content-score">${fmt(item.score)} interações</span>
+        </div>
+        <div class="bi-content-caption">${biEsc(caption)}</div>
+        ${date ? `<div class="bi-content-caption">${biEsc(date)}</div>` : ""}
+      </article>`;
+  }).join("");
+}
+
+function renderBiAnalysis(){
+  const text = latestSnapshot?.strategic_analysis ||
+    latestSnapshot?.current_analysis || "";
+
+  if(!text){
+    $("biAnalysis").innerHTML =
+      '<div class="bi-empty">A análise estratégica não está disponível neste registro.</div>';
+    return;
+  }
+
+  const lines = String(text).split(/\n+/).map(line=>line.trim())
+    .filter(Boolean).slice(0,9);
+
+  $("biAnalysis").innerHTML = lines.map(line=>
+    `<div class="bi-analysis-item">${biEsc(line.replace(/^[-•]\s*/,""))}</div>`
+  ).join("");
+}
+
+async function carregarDashboardSalvo(){
+  const username = biSelectedUsername();
+  if(!username) return;
+
+  try{
+    const res = await fetch(
+      "/api/acompanhamento-quinzenal/snapshots?instagram_username="
+      + encodeURIComponent(username),
+      {credentials:"same-origin"}
+    );
+    const data = await res.json();
+    if(!res.ok || !data.ok || !data.snapshots?.length) return;
+
+    const row = data.snapshots[0];
+    let raw = {};
+    try{ raw = JSON.parse(row.raw_json || "{}"); }catch(e){ raw = {}; }
+
+    latestSnapshot = {
+      current: row,
+      client_name: row.client_name,
+      instagram_username: row.instagram_username,
+      period_start: row.period_start,
+      period_end: row.period_end,
+      strategic_analysis: row.strategic_analysis,
+      raw_posts: Array.isArray(raw.posts) ? raw.posts : []
+    };
+
+    $("mReach").textContent = fmt(row.reach);
+    $("mFollowers").textContent = fmt(row.followers_count);
+    $("mInteractions").textContent = fmt(row.total_interactions);
+    $("mPosts").textContent = fmt(row.posts_count);
+    $("analysisBox").value = row.strategic_analysis || "";
+
+    await compararQuinzenas();
+    renderDashboard();
+  }catch(error){
+    console.warn("Não foi possível recuperar o dashboard salvo:",error);
+  }
+}
+
 
 function setDefaultDates(){
   const end = new Date();
@@ -7072,6 +7878,7 @@ async function loadAccounts(){
 
     setStatus("Conta conectada carregada. Pronto para gerar acompanhamento quinzenal.", true);
     carregarHistorico();
+    carregarDashboardSalvo();
 
   }catch(e){
     setStatus("Erro ao carregar contas: " + e.message, false);
@@ -7106,6 +7913,8 @@ async function gerarSnapshot(){
 
     if(!res.ok) throw new Error(JSON.stringify(data.detail || data));
 
+    latestSnapshot = data;
+    latestComparison = null;
     $("mReach").textContent = fmt(data.current.reach);
     $("mFollowers").textContent = fmt(data.current.followers_count);
     $("mInteractions").textContent = fmt(data.current.total_interactions);
@@ -7115,10 +7924,155 @@ async function gerarSnapshot(){
     setStatus("Acompanhamento salvo com sucesso. Snapshot ID: " + data.snapshot_id, true);
 
     await carregarHistorico();
-    await compararQuinzenas();
+    await carregarDashboardSalvo();
 
   }catch(e){
     setStatus("Erro ao gerar acompanhamento: " + e.message, false);
+  }
+}
+
+
+async function selecionarSnapshot(snapshotId, button){
+  try{
+    const username = button?.closest("tr")?.cells?.[1]?.textContent
+      ?.trim().replace(/^@/,"");
+
+    if(!username) throw new Error("Não foi possível identificar a conta.");
+
+    setStatus("Carregando período selecionado...",true);
+
+    const res = await fetch(
+      "/api/acompanhamento-quinzenal/snapshots?instagram_username="
+      + encodeURIComponent(username),
+      {credentials:"same-origin"}
+    );
+
+    const data = await res.json();
+    if(!res.ok || !data.ok) {
+      throw new Error(data.detail || "Erro ao consultar histórico.");
+    }
+
+    const rows = data.snapshots || [];
+    const index = rows.findIndex(r => Number(r.id) === Number(snapshotId));
+
+    if(index < 0) throw new Error("Acompanhamento não encontrado.");
+
+    const row = rows[index];
+    const previous = rows[index + 1] || null;
+
+    let raw = {};
+    try{
+      raw = JSON.parse(row.raw_json || "{}");
+    }catch(e){
+      raw = {};
+    }
+
+    latestSnapshot = {
+      current: row,
+      client_name: row.client_name,
+      instagram_username: row.instagram_username,
+      period_start: row.period_start,
+      period_end: row.period_end,
+      strategic_analysis: row.strategic_analysis,
+      raw_posts: Array.isArray(raw.posts) ? raw.posts : []
+    };
+
+    // Comparação relativa à captura imediatamente anterior
+    // da mesma conta, respeitando a ordem do histórico.
+    latestComparison = null;
+
+    if(previous){
+      const keys = [
+        "followers_count","reach","impressions","profile_views",
+        "website_clicks","total_interactions","likes","comments",
+        "shares","saves","posts_count"
+      ];
+
+      const comparison = {};
+
+      keys.forEach(key=>{
+        const currentValue = Number(row[key] || 0);
+        const previousValue = Number(previous[key] || 0);
+        const absolute = currentValue - previousValue;
+
+        comparison[key] = {
+          current: currentValue,
+          previous: previousValue,
+          absolute,
+          percent: previousValue === 0
+            ? null
+            : Math.round((absolute / previousValue) * 1000) / 10
+        };
+      });
+
+      latestComparison = {
+        ok: true,
+        instagram_username: username,
+        current_snapshot: row,
+        previous_snapshot: previous,
+        current_period: {
+          start: row.period_start,
+          end: row.period_end
+        },
+        previous_period: {
+          start: previous.period_start,
+          end: previous.period_end
+        },
+        comparison
+      };
+
+      $("compareBox").innerHTML = `
+        <div class="metricLine">
+          <span>Período selecionado</span>
+          <b>${biEsc(row.period_start)} até ${biEsc(row.period_end)}</b>
+        </div>
+        <div class="metricLine">
+          <span>Período anterior</span>
+          <b>${biEsc(previous.period_start)} até ${biEsc(previous.period_end)}</b>
+        </div>
+        <div class="metricLine"><span>Alcance</span>${pctLabel(comparison.reach.percent)}</div>
+        <div class="metricLine"><span>Visualizações</span>${pctLabel(comparison.impressions.percent)}</div>
+        <div class="metricLine"><span>Interações</span>${pctLabel(comparison.total_interactions.percent)}</div>
+        <div class="metricLine"><span>Visitas ao perfil</span>${pctLabel(comparison.profile_views.percent)}</div>
+      `;
+    }else{
+      $("compareBox").textContent =
+        "Esta é a primeira captura disponível para esta conta. Não existe período anterior para comparação.";
+    }
+
+    // Sincroniza a conta selecionada no formulário.
+    const accountSelect = $("accountSelect");
+    const optionIndex = Array.from(accountSelect.options).findIndex(
+      option => option.textContent.includes("@"+username)
+    );
+
+    if(optionIndex >= 0) accountSelect.selectedIndex = optionIndex;
+
+    $("clientName").value = row.client_name || "";
+    $("periodStart").value = row.period_start || "";
+    $("periodEnd").value = row.period_end || "";
+
+    $("mReach").textContent = fmt(row.reach);
+    $("mFollowers").textContent = fmt(row.followers_count);
+    $("mInteractions").textContent = fmt(row.total_interactions);
+    $("mPosts").textContent = fmt(row.posts_count);
+    $("analysisBox").value = row.strategic_analysis || "";
+
+    renderDashboard();
+
+    setStatus(
+      "Período carregado: " + row.period_start + " até " + row.period_end
+      + ". Snapshot ID: " + row.id,
+      true
+    );
+
+    document.getElementById("biDashboard")?.scrollIntoView({
+      behavior:"smooth",
+      block:"start"
+    });
+
+  }catch(error){
+    setStatus("Erro ao selecionar período: " + error.message,false);
   }
 }
 
@@ -7146,6 +8100,7 @@ async function carregarHistorico(){
             <th>Seguidores</th>
             <th>Interações</th>
             <th>Posts</th>
+            <th>Ação</th>
           </tr>
         </thead>
         <tbody>
@@ -7157,6 +8112,13 @@ async function carregarHistorico(){
               <td>${fmt(r.followers_count)}</td>
               <td>${fmt(r.total_interactions)}</td>
               <td>${fmt(r.posts_count)}</td>
+              <td>
+                <button type="button"
+                  onclick="selecionarSnapshot(Number(this.dataset.snapshotId), this)"
+                  data-snapshot-id="${Number(r.id)}">
+                  Visualizar período
+                </button>
+              </td>
             </tr>
           `).join("")}
         </tbody>
@@ -7184,10 +8146,12 @@ async function compararQuinzenas(){
     const data = await res.json();
 
     if(!data.ok){
+      latestComparison = null;
       $("compareBox").textContent = data.message || "Ainda não há comparação disponível.";
       return;
     }
 
+    latestComparison = data;
     const c = data.comparison || {};
 
     $("compareBox").innerHTML = `
@@ -7200,6 +8164,7 @@ async function compararQuinzenas(){
       <div class="metricLine"><span>Seguidores</span><b>${c.followers_count.absolute > 0 ? "+" : ""}${fmt(c.followers_count.absolute)}</b></div>
       <div class="metricLine"><span>Posts</span><b>${c.posts_count.absolute > 0 ? "+" : ""}${fmt(c.posts_count.absolute)}</b></div>
     `;
+    renderDashboard();
 
   }catch(e){
     $("compareBox").textContent = "Erro ao comparar quinzenas: " + e.message;
