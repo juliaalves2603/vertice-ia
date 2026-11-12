@@ -42,3 +42,29 @@ backend/app_backup_*.py
 backend/static/*backup*.html
 backend/static/*.bak*
 .envmama
+
+# Segredos e ambiente
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Banco de dados e arquivos locais
+*.db
+*.sqlite
+*.sqlite3
+
+# Backups
+*.backup*
+*.bak
+*.old
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Logs
+*.log

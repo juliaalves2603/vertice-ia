@@ -602,6 +602,7 @@ let state = {
   report: null,
   advanced: null,
   account: null,
+  profileInsights: null,
   status: null
 };
 
@@ -738,7 +739,7 @@ function renderInicioCliente(){
     <br>
     <div class="grid four">
       <div class="stat gold"><small>Posts analisados</small><strong>${fmt(state.posts.length)}</strong><div class="hint">Conteúdos avaliados</div></div>
-      <div class="stat"><small>Alcance</small><strong>${fmt(d.reach)}</strong><div class="hint">Visibilidade</div></div>
+      <div class="stat"><small>Alcance do perfil</small><strong>${state.profileInsights?.available ? fmt(state.profileInsights.reach) : "—"}</strong><div class="hint">${state.profileInsights?.available ? "Últimos 30 dias" : "Dado indisponível na Meta"}</div></div>
       <div class="stat"><small>Salvamentos</small><strong>${fmt(d.saved)}</strong><div class="hint">Valor percebido</div></div>
       <div class="stat"><small>Compartilhamentos</small><strong>${fmt(d.shares)}</strong><div class="hint">Identificação</div></div>
     </div>
@@ -1141,6 +1142,10 @@ function renderMetricasCliente(){
             <span class="badge">Dados reais</span>
           </div>
         </div>
+        <div class="row">
+          <button class="btn" onclick="importPosts()">Atualizar publicações</button>
+          <button class="btn green" onclick="saveClientSnapshot()">Salvar snapshot</button>
+        </div>
       </div>
     </div>
 
@@ -1172,6 +1177,61 @@ function renderMetricasCliente(){
       </div>
     </div>
 
+
+    <div class="grid two">
+      <div class="card">
+        <div class="eyebrow">Desempenho individual</div>
+        <h2>Alcance por publicação</h2>
+        <p class="muted">Publicações com maior alcance no período analisado.</p>
+        ${(() => {
+          const rows = [...state.posts]
+            .sort((a,b) => Number(b.reach||0) - Number(a.reach||0))
+            .slice(0,8);
+          const max = Math.max(1, ...rows.map(p => Number(p.reach||0)));
+          return rows.length ? rows.map(p => {
+            const value = Number(p.reach||0);
+            return `
+              <div style="margin:16px 0">
+                <div class="between" style="gap:12px">
+                  <span class="muted">${safe(short(p.caption || p.media_type || "Publicação", 55))}</span>
+                  <strong>${fmt(value)}</strong>
+                </div>
+                <div style="height:10px;background:var(--line, #e5e7eb);border-radius:20px;overflow:hidden;margin-top:7px">
+                  <div style="height:100%;width:${Math.max(0,Math.min(100,value/max*100))}%;background:linear-gradient(90deg,#b58a3b,#e1c477);border-radius:20px"></div>
+                </div>
+              </div>`;
+          }).join("") : '<div class="empty">Nenhuma publicação disponível.</div>';
+        })()}
+      </div>
+
+      <div class="card">
+        <div class="eyebrow">Engajamento</div>
+        <h2>Interações por publicação</h2>
+        <p class="muted">Soma de curtidas, comentários, salvamentos e compartilhamentos.</p>
+        ${(() => {
+          const rows = [...state.posts].map(p => ({
+            post: p,
+            total: Number(p.like_count||0) +
+                   Number(p.comments_count||0) +
+                   Number(p.saved||0) +
+                   Number(p.shares||0)
+          })).sort((a,b) => b.total-a.total).slice(0,8);
+          const max = Math.max(1, ...rows.map(x => x.total));
+          return rows.length ? rows.map(x => `
+            <div style="margin:16px 0">
+              <div class="between" style="gap:12px">
+                <span class="muted">${safe(short(x.post.caption || x.post.media_type || "Publicação", 55))}</span>
+                <strong>${fmt(x.total)}</strong>
+              </div>
+              <div style="height:10px;background:var(--line, #e5e7eb);border-radius:20px;overflow:hidden;margin-top:7px">
+                <div style="height:100%;width:${Math.max(0,Math.min(100,x.total/max*100))}%;background:linear-gradient(90deg,#64748b,#aab6c5);border-radius:20px"></div>
+              </div>
+            </div>`).join("") : '<div class="empty">Nenhuma publicação disponível.</div>';
+        })()}
+      </div>
+    </div>
+
+    <br>
     <br>
 
     <div class="grid mainSplit">
@@ -1381,12 +1441,26 @@ function renderMetricas(){
     </div>`;
 }
 
+
+async function loadProfileInsights(){
+  try{
+    state.profileInsights = await api("/api/profile-insights");
+  }catch(e){
+    state.profileInsights = {
+      available: false,
+      reach: null,
+      message: e.message
+    };
+  }
+}
+
 async function importPosts(){
   try{
     show("Importando dados reais da Meta. Aguarde...", "success");
     const data = await api("/api/posts?limit=50");
     state.posts = data.data || [];
     state.account = data;
+    await loadProfileInsights();
     show(`Importação concluída: ${state.posts.length} posts reais.`, "success");
     renderMetricas();
   }catch(e){ show(e.message); }
@@ -1399,6 +1473,51 @@ async function saveSnapshot(){
     await loadSnapshots(false);
     renderMetricas();
   }catch(e){ show(e.message); }
+}
+
+async function refreshClientEvolution(){
+  try{
+    show("Atualizando publicações e histórico da conta...", "success");
+
+    const posts = await api("/api/posts?limit=50");
+    state.posts = posts.data || [];
+    state.account = posts;
+    await loadProfileInsights();
+
+    const snapshots = await api("/api/snapshots?limit=50");
+    state.snapshots = snapshots.snapshots || [];
+
+    state.report = await api("/api/comparative-report?days=365");
+
+    renderHistoricoCliente();
+    show("Publicações e evolução atualizadas.", "success");
+  }catch(e){
+    show(e.message);
+  }
+}
+
+async function saveClientSnapshot(){
+  try{
+    show("Buscando dados atuais para salvar o snapshot...", "success");
+
+    const result = await api("/api/snapshots/save?limit=50", {
+      method: "POST"
+    });
+
+    const snapshots = await api("/api/snapshots?limit=50");
+    state.snapshots = snapshots.snapshots || [];
+
+    state.report = await api("/api/comparative-report?days=365");
+
+    renderHistoricoCliente();
+
+    show(
+      `Snapshot salvo com sucesso. ID ${result.snapshot.id}.`,
+      "success"
+    );
+  }catch(e){
+    show(e.message);
+  }
 }
 
 function renderHistoricoCliente(){
@@ -1471,8 +1590,12 @@ function renderHistoricoCliente(){
         </div>
 
         <div class="row">
-          <button class="btn" onclick="loadSnapshots(true)">
+          <button class="btn" onclick="refreshClientEvolution()">
             Atualizar evolução
+          </button>
+
+          <button class="btn green" onclick="saveClientSnapshot()">
+            Salvar snapshot
           </button>
 
           <button class="btn secondary" onclick="go('estrategico')">
@@ -1480,6 +1603,18 @@ function renderHistoricoCliente(){
           </button>
         </div>
       </div>
+    </div>
+
+    <br>
+
+    <div class="card" id="clientEvolutionReport">
+      <div class="eyebrow">Relatório automático Vértice</div>
+      <h2>Análise real da sua evolução</h2>
+      ${
+        state.report
+          ? visualReport(state.report)
+          : `<div class="empty">Carregando relatório comparativo dos registros da sua conta...</div>`
+      }
     </div>
 
     <br>
@@ -1684,6 +1819,7 @@ function renderHistoricoCliente(){
 function renderHistorico(){
   if(currentUser?.role === "client"){
     renderHistoricoCliente();
+    loadComparative("historico");
     return;
   }
 
@@ -1781,12 +1917,19 @@ function renderRelatorio(){
     </div>`;
 }
 
-async function loadComparative(){
+async function loadComparative(target="relatorio"){
   try{
-    state.report = await api("/api/comparative-report?days=90");
-    renderRelatorio();
-    show("Relatório gerado.", "success");
-  }catch(e){ show(e.message); }
+    state.report = await api("/api/comparative-report?days=365");
+
+    if(target === "historico"){
+      renderHistoricoCliente();
+    }else{
+      renderRelatorio();
+      show("Relatório comparativo gerado.", "success");
+    }
+  }catch(e){
+    show(e.message);
+  }
 }
 
 function visualReport(r){
@@ -4995,6 +5138,7 @@ loadCurrentUser().then(async () => {
       const data = await api("/api/posts?limit=50");
       state.posts = data.data || [];
       state.account = data;
+      await loadProfileInsights();
     }catch(e){
       console.error("Falha ao carregar dados do cliente:", e);
     }

@@ -1,3 +1,6 @@
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 
 from fastapi import FastAPI
@@ -723,7 +726,7 @@ async def vertice_visual_login_middleware(request: Request, call_next):
     return RedirectResponse("/login")
 
 
-@app.get("/api/session-check")
+@app.api_route("/api/session-check", methods=["GET", "HEAD"])
 def api_session_check(request: Request):
     user = _vertice_current_user(request)
     return {
@@ -976,6 +979,134 @@ def my_pages():
 
 @app.get('/api/resolve-account')
 def api_resolve(): return {'status':'sucesso', **resolve_account()}
+
+
+@app.get("/api/profile-insights")
+def api_profile_insights(request: Request):
+    """
+    Retorna o alcance agregado do perfil nos últimos 30 dias.
+    Não soma valores diários nem alcance de publicações.
+    """
+    import datetime
+    import json
+    import sqlite3
+
+    user = _vertice_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Sessão inválida.")
+
+    account_id = user.get("meta_account_id")
+    if not account_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Nenhuma conta Instagram vinculada."
+        )
+
+    conn = sqlite3.connect(_meta_client_db_path())
+    conn.row_factory = sqlite3.Row
+
+    try:
+        row = conn.execute(
+            "SELECT * FROM meta_connected_accounts WHERE id = ?",
+            (account_id,)
+        ).fetchone()
+    finally:
+        conn.close()
+
+    if not row:
+        raise HTTPException(
+            status_code=404,
+            detail="Conta Instagram vinculada não encontrada."
+        )
+
+    account = dict(row)
+
+    try:
+        raw_payload = json.loads(account.get("raw_payload") or "{}")
+    except Exception:
+        raw_payload = {}
+
+    instagram_login = raw_payload.get("login_type") == "instagram_login"
+
+    if instagram_login:
+        token = (
+            account.get("user_access_token")
+            or account.get("long_lived_user_token")
+        )
+        path = "me/insights"
+        graph = _instagram_graph_get
+    else:
+        token = (
+            account.get("page_access_token")
+            or account.get("user_access_token")
+        )
+        ig_id = (
+            account.get("instagram_business_account_id")
+            or account.get("ig_user_id")
+        )
+        path = f"{ig_id}/insights"
+        graph = _meta_graph_get
+
+    if not token:
+        return {
+            "available": False,
+            "reach": None,
+            "period": "last_30_days",
+            "message": "Token de acesso indisponível."
+        }
+
+    end_date = datetime.date.today()
+    start_date = end_date - datetime.timedelta(days=29)
+
+    params = {
+        "metric": "reach",
+        "period": "day",
+        "metric_type": "total_value",
+        "since": start_date.isoformat(),
+        "until": end_date.isoformat()
+    }
+
+    try:
+        response = graph(path, token, params)
+        metric = next(
+            (
+                item for item in response.get("data", [])
+                if item.get("name") == "reach"
+            ),
+            None
+        )
+
+        total = (metric or {}).get("total_value")
+        value = total.get("value") if isinstance(total, dict) else total
+
+        if isinstance(value, (int, float)):
+            return {
+                "available": True,
+                "reach": int(value),
+                "period": "last_30_days",
+                "period_start": start_date.isoformat(),
+                "period_end": end_date.isoformat(),
+                "source": "instagram_account_insights"
+            }
+
+        return {
+            "available": False,
+            "reach": None,
+            "period": "last_30_days",
+            "period_start": start_date.isoformat(),
+            "period_end": end_date.isoformat(),
+            "message": "A Meta não retornou o total agregado de alcance."
+        }
+
+    except Exception:
+        return {
+            "available": False,
+            "reach": None,
+            "period": "last_30_days",
+            "period_start": start_date.isoformat(),
+            "period_end": end_date.isoformat(),
+            "message": "Não foi possível consultar o alcance agregado na Meta."
+        }
 
 @app.get('/api/posts')
 def api_posts(request: Request, limit:int=Query(50,ge=1,le=100)):
